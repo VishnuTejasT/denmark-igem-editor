@@ -25,6 +25,7 @@ export async function fetchPage(token, pageName) {
 
 export async function commitPage(token, pageName, content, lastCommitId, authorName) {
   const url = `${BASE}/projects/${PROJECT_ID}/repository/files/${encodedPath(pageName)}`;
+  console.log('[commitPage] PUT', url, { branch: BRANCH, last_commit_id: lastCommitId });
   const res = await fetch(url, {
     method: 'PUT',
     headers: {
@@ -42,6 +43,7 @@ export async function commitPage(token, pageName, content, lastCommitId, authorN
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
+    console.error('[commitPage] failed', res.status, JSON.stringify(err));
     throw new Error(err.message || `Commit failed: ${res.statusText}`);
   }
   return res.json();

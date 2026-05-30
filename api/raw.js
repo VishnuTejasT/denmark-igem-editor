@@ -19,8 +19,11 @@ export default async function handler(req, res) {
     });
 
     if (!upstream.ok) {
+      const body = await upstream.text().catch(() => '');
+      console.error('[raw] GitLab error', upstream.status, safePath, body.slice(0, 500));
       return res.status(upstream.status).json({
         error: `GitLab returned ${upstream.status} for ${safePath}`,
+        detail: body.slice(0, 500),
       });
     }
 
