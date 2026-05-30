@@ -24,27 +24,51 @@ export async function fetchPage(token, pageName) {
 }
 
 export async function commitPage(token, pageName, content, lastCommitId, authorName) {
-  const url = `${BASE}/projects/${PROJECT_ID}/repository/files/${encodedPath(pageName)}`;
-  console.log('[commitPage] PUT', url, { branch: BRANCH, last_commit_id: lastCommitId });
-  const res = await fetch(url, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      branch: BRANCH,
-      content: JSON.stringify(content, null, 2),
-      commit_message: `Update ${pageName} wiki content`,
-      last_commit_id: lastCommitId,
-      author_name: authorName,
-      encoding: 'text',
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    console.error('[commitPage] failed', res.status, JSON.stringify(err));
-    throw new Error(err.message || `Commit failed: ${res.statusText}`);
+  const filePath = encodedPath(pageName);
+  const url = `${BASE}/projects/${PROJECT_ID}/repository/files/${filePath}`;
+  const bodyPayload = {
+    branch: BRANCH,
+    content: JSON.stringify(content, null, 2),
+    commit_message: `Update ${pageName} wiki content`,
+    author_name: authorName,
+    encoding: 'text',
+  };
+
+  // PUT updates an existing file; POST creates it when it doesn't exist yet.
+  const methods = lastCommitId
+    ? [{ method: 'PUT', body: { ...bodyPayload, last_commit_id: lastCommitId } }]
+    : [
+        { method: 'PUT', body: { ...bodyPayload, last_commit_id: lastCommitId } },
+        { method: 'POST', body: bodyPayload },
+      ];
+
+  let lastStatus = null;
+  let lastBodyText = '';
+
+  for (const { method, body } of methods) {
+    console.log(`[commitPage] ${method} ${url}`, body);
+    const res = await fetch(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    lastBodyText = await res.text();
+    lastStatus = res.status;
+    console.log(`[commitPage] ${method} → ${res.status}`, lastBodyText.slice(0, 1000));
+
+    if (res.ok) {
+      return JSON.parse(lastBodyText);
+    }
+
+    // 404 on PUT means the file doesn't exist yet — try POST next (if queued).
+    if (res.status !== 404) break;
   }
-  return res.json();
+
+  let parsed = {};
+  try { parsed = JSON.parse(lastBodyText); } catch (_) {}
+  throw new Error(parsed.message || `Commit failed (${lastStatus}): ${lastBodyText.slice(0, 300)}`);
 }
