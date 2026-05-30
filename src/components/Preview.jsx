@@ -15,21 +15,18 @@ function rewriteAssetUrls(html) {
     .replace(/(src|href)='static\//g, `$1='${STATIC_RAW_BASE}wiki/static/`);
 }
 
-function buildHtml(rawHtml, css, content) {
+function buildHtml(rawHtml, css) {
   let html = rewriteAssetUrls(rawHtml);
 
   const injectedStyle = css ? `<style>${css}</style>` : '';
 
-  // Script sets window.__WIKI_CONTENT and tries common data-content-key selectors
   const injectedScript = `<script>
 (function() {
-  var c = ${JSON.stringify(content)};
-  window.__WIKI_CONTENT = c;
   function set(sel, val) {
     var el = document.querySelector(sel);
     if (el) el.textContent = val;
   }
-  function run() {
+  function applyContent(c) {
     set('[data-content-key="title"]', c.title);
     set('[data-content-key="intro"]', c.intro);
     (c.sections || []).forEach(function(s, i) {
@@ -37,11 +34,9 @@ function buildHtml(rawHtml, css, content) {
       set('[data-content-key="sections.' + i + '.body"]', s.body);
     });
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run);
-  } else {
-    run();
-  }
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'WIKI_CONTENT') applyContent(e.data.content);
+  });
 })();
 <\/script>`;
 
@@ -57,6 +52,8 @@ function buildHtml(rawHtml, css, content) {
 export default function Preview({ selectedPage, token, content }) {
   const iframeRef = useRef(null);
   const blobUrlRef = useRef(null);
+  const contentRef = useRef(content);
+  contentRef.current = content;
   const [rawHtml, setRawHtml] = useState(null);
   const [css, setCss] = useState('');
   const [fetchError, setFetchError] = useState(null);
@@ -85,23 +82,40 @@ export default function Preview({ selectedPage, token, content }) {
       .finally(() => setLoading(false));
   }, [selectedPage, token]);
 
+  // Rebuild iframe blob URL only when the page template changes
   useEffect(() => {
     if (!rawHtml) return;
 
-    const html = buildHtml(rawHtml, css, content);
+    const html = buildHtml(rawHtml, css);
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
 
     if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
     blobUrlRef.current = url;
 
-    if (iframeRef.current) iframeRef.current.src = url;
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    iframe.onload = () => {
+      iframe.contentWindow?.postMessage(
+        { type: 'WIKI_CONTENT', content: contentRef.current }, '*'
+      );
+    };
+    iframe.src = url;
 
     return () => {
+      iframe.onload = null;
       URL.revokeObjectURL(url);
       blobUrlRef.current = null;
     };
-  }, [rawHtml, css, content]);
+  }, [rawHtml, css]);
+
+  // Push content updates into the loaded iframe without reloading it
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe?.contentWindow || !rawHtml) return;
+    iframe.contentWindow.postMessage({ type: 'WIKI_CONTENT', content }, '*');
+  }, [content, rawHtml]);
 
   if (!selectedPage) {
     return <div style={styles.placeholder}>Select a page to preview.</div>;
