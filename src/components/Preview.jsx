@@ -120,10 +120,12 @@ export default function Preview({ selectedPage, token, content }) {
   // Push content updates into the loaded iframe without reloading it
   useEffect(() => {
     const iframe = iframeRef.current;
-    if (!iframe?.contentWindow || !rawHtml) return;
     const newLen = content?.sections?.length ?? 0;
     const prevLen = prevSectionsLenRef.current;
     prevSectionsLenRef.current = newLen;
+
+    if (!rawHtml || !iframe) return;
+
     if (prevLen !== null && newLen !== prevLen) {
       const html = buildHtml(rawHtml, css);
       const blob = new Blob([html], { type: 'text/html' });
@@ -134,7 +136,7 @@ export default function Preview({ selectedPage, token, content }) {
         iframe.contentWindow?.postMessage({ type: 'WIKI_CONTENT', content }, '*');
       };
       iframe.src = url;
-    } else {
+    } else if (iframe.contentWindow) {
       iframe.contentWindow.postMessage({ type: 'WIKI_CONTENT', content }, '*');
     }
   }, [content, rawHtml]);
