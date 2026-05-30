@@ -41,6 +41,7 @@ function buildHtml(rawHtml, css) {
     });
   }
   window.addEventListener('message', function(e) {
+    console.log('[IFRAME] message received:', e.data && e.data.type, 'sections:', e.data && e.data.content && e.data.content.sections && e.data.content.sections.length);
     if (e.data && e.data.type === 'WIKI_CONTENT') applyContent(e.data.content);
   });
 })();
@@ -124,19 +125,24 @@ export default function Preview({ selectedPage, token, content }) {
     const prevLen = prevSectionsLenRef.current;
     prevSectionsLenRef.current = newLen;
 
+    console.log('[Preview] content effect fired | newLen:', newLen, 'prevLen:', prevLen, 'rawHtml:', !!rawHtml, 'iframe:', !!iframe);
+
     if (!rawHtml || !iframe) return;
 
     if (prevLen !== null && newLen !== prevLen) {
+      console.log('[Preview] REBUILD triggered — section count changed:', prevLen, '→', newLen);
       const html = buildHtml(rawHtml, css);
       const blob = new Blob([html], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
       blobUrlRef.current = url;
       iframe.onload = () => {
+        console.log('[Preview] postMessage after REBUILD');
         iframe.contentWindow?.postMessage({ type: 'WIKI_CONTENT', content }, '*');
       };
       iframe.src = url;
     } else if (iframe.contentWindow) {
+      console.log('[Preview] postMessage (no rebuild)');
       iframe.contentWindow.postMessage({ type: 'WIKI_CONTENT', content }, '*');
     }
   }, [content, rawHtml]);

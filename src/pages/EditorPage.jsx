@@ -23,6 +23,7 @@ export default function EditorPage() {
   const [lastCommitId, setLastCommitId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [committing, setCommitting] = useState(false);
+  const [commitMessage, setCommitMessage] = useState('');
   const [status, setStatus] = useState(null); // { type: 'success'|'error', message }
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export default function EditorPage() {
     setContent(EMPTY);
     setLastCommitId(null);
     setStatus(null);
+    setCommitMessage('');
     if (!pageName) return;
 
     setLoading(true);
@@ -62,7 +64,8 @@ export default function EditorPage() {
     setCommitting(true);
     setStatus(null);
     try {
-      await commitPage(token, selectedPage, content, lastCommitId, username);
+      const message = commitMessage.trim() || `Update ${selectedPage} content`;
+      await commitPage(token, selectedPage, content, lastCommitId, username, message);
       setStatus({ type: 'success', message: 'Committed successfully.' });
     } catch (e) {
       setStatus({ type: 'error', message: e.message });
@@ -91,6 +94,15 @@ export default function EditorPage() {
             <option key={p} value={p}>{p}</option>
           ))}
         </select>
+
+        <input
+          style={styles.commitInput}
+          type="text"
+          placeholder={selectedPage ? `Update ${selectedPage} content` : 'Commit message'}
+          value={commitMessage}
+          onChange={e => setCommitMessage(e.target.value)}
+          disabled={!selectedPage || committing || loading}
+        />
 
         <button
           style={{ ...styles.btn, ...styles.btnPrimary }}
@@ -152,6 +164,13 @@ const styles = {
     borderRadius: 6,
     border: '1px solid #ccc',
     fontSize: 14,
+  },
+  commitInput: {
+    padding: '6px 10px',
+    borderRadius: 6,
+    border: '1px solid #ccc',
+    fontSize: 14,
+    width: 240,
   },
   btn: {
     padding: '6px 14px',

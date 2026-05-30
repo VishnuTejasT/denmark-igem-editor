@@ -23,13 +23,13 @@ export async function fetchPage(token, pageName) {
   };
 }
 
-export async function commitPage(token, pageName, content, lastCommitId, authorName) {
+export async function commitPage(token, pageName, content, lastCommitId, authorName, commitMessage) {
   const filePath = encodedPath(pageName);
   const url = `${BASE}/projects/${PROJECT_ID}/repository/files/${filePath}`;
   const bodyPayload = {
     branch: BRANCH,
     content: JSON.stringify(content, null, 2),
-    commit_message: `Update ${pageName} wiki content`,
+    commit_message: commitMessage || `Update ${pageName} wiki content`,
     author_name: authorName,
     encoding: 'text',
   };

@@ -1,4 +1,4 @@
-const REDIRECT_URI = 'https://project-qznrm.vercel.app/callback';
+const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI || 'https://project-qznrm.vercel.app/callback';
 
 export default function LoginPage() {
   const handleLogin = () => {
