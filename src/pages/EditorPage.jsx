@@ -122,8 +122,8 @@ export default function EditorPage() {
             <div style={styles.pane}>
               <Editor content={content} onChange={setContent} />
             </div>
-            <div style={{ ...styles.pane, background: '#fafafa', borderLeft: '1px solid #e0e0e0' }}>
-              <Preview content={content} />
+            <div style={{ ...styles.pane, background: '#fafafa', borderLeft: '1px solid #e0e0e0', padding: 0 }}>
+              <Preview selectedPage={selectedPage} token={token} content={content} />
             </div>
           </>
         )}
