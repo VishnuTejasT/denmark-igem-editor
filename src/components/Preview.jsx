@@ -27,11 +27,16 @@ function buildHtml(rawHtml, css) {
     if (el) el.textContent = val;
   }
   function applyContent(c) {
-    set('[data-content-key="title"]', c.title);
-    set('[data-content-key="intro"]', c.intro);
+    set('.page-hero h2', c.title);
+    set('.page-hero .summary', c.intro);
+    var sections = document.querySelectorAll('.toc-section');
     (c.sections || []).forEach(function(s, i) {
-      set('[data-content-key="sections.' + i + '.heading"]', s.heading);
-      set('[data-content-key="sections.' + i + '.body"]', s.body);
+      var sec = sections[i];
+      if (!sec) return;
+      var h3 = sec.querySelector('h3');
+      if (h3) h3.textContent = s.heading;
+      var body = sec.querySelector('.placeholder-block');
+      if (body) body.textContent = s.body;
     });
   }
   window.addEventListener('message', function(e) {
