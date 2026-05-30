@@ -8,7 +8,8 @@ export default function LoginPage() {
       response_type: 'code',
       scope: 'api',
     });
-    const gitlabHost = import.meta.env.VITE_GITLAB_HOST || 'gitlab.igem.org';
+    const rawHost = import.meta.env.VITE_GITLAB_HOST || 'gitlab.igem.org';
+    const gitlabHost = rawHost.replace(/^https?:\/\//, '');
     window.location.href = `https://${gitlabHost}/oauth/authorize?${params}`;
   };
 
