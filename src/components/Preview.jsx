@@ -3,8 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 const STATIC_RAW_BASE =
   'https://gitlab.igem.org/vishnutejast/denmarkwiki/-/raw/feature/content-system/';
 
-async function fetchRaw(path) {
-  const res = await fetch(`/api/raw?path=${encodeURIComponent(path)}`);
+async function fetchRaw(path, token) {
+  const url = `/api/raw?path=${encodeURIComponent(path)}&token=${encodeURIComponent(token)}`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`${res.status} fetching ${path}`);
   return res.text();
 }
@@ -76,9 +77,9 @@ export default function Preview({ selectedPage, token, content }) {
     setFetchError(null);
 
     Promise.all([
-      fetchRaw(`wiki/pages/${selectedPage}.html`),
-      fetchRaw('wiki/static/style.css').catch(() => ''),
-      fetchRaw('wiki/static/denmark.css').catch(() => ''),
+      fetchRaw(`wiki/pages/${selectedPage}.html`, token),
+      fetchRaw('wiki/static/style.css', token).catch(() => ''),
+      fetchRaw('wiki/static/denmark.css', token).catch(() => ''),
     ])
       .then(([html, style, denmark]) => {
         setRawHtml(html);

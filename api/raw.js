@@ -2,9 +2,12 @@ const REPO_RAW_BASE =
   'https://gitlab.igem.org/vishnutejast/denmarkwiki/-/raw/feature/content-system/';
 
 export default async function handler(req, res) {
-  const { path } = req.query;
+  const { path, token } = req.query;
   if (!path) {
     return res.status(400).json({ error: 'Missing path query parameter' });
+  }
+  if (!token) {
+    return res.status(400).json({ error: 'Missing token query parameter' });
   }
 
   // Prevent path traversal
@@ -14,7 +17,7 @@ export default async function handler(req, res) {
   try {
     const upstream = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${process.env.GITLAB_SECRET}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
