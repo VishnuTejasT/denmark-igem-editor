@@ -1,19 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 
-const RAW_BASE = 'https://gitlab.igem.org/vishnutejast/denmarkwiki/-/raw/feature/content-system/';
+const STATIC_RAW_BASE =
+  'https://gitlab.igem.org/vishnutejast/denmarkwiki/-/raw/feature/content-system/';
 
-async function fetchRaw(url, token) {
-  const res = await fetch(url, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  if (!res.ok) throw new Error(`${res.status} fetching ${url}`);
+async function fetchRaw(path) {
+  const res = await fetch(`/api/raw?path=${encodeURIComponent(path)}`);
+  if (!res.ok) throw new Error(`${res.status} fetching ${path}`);
   return res.text();
 }
 
 function rewriteAssetUrls(html) {
   return html
-    .replace(/(src|href)="static\//g, `$1="${RAW_BASE}wiki/static/`)
-    .replace(/(src|href)='static\//g, `$1='${RAW_BASE}wiki/static/`);
+    .replace(/(src|href)="static\//g, `$1="${STATIC_RAW_BASE}wiki/static/`)
+    .replace(/(src|href)='static\//g, `$1='${STATIC_RAW_BASE}wiki/static/`);
 }
 
 function buildHtml(rawHtml, css, content) {
@@ -73,14 +72,10 @@ export default function Preview({ selectedPage, token, content }) {
     setLoading(true);
     setFetchError(null);
 
-    const htmlUrl = `${RAW_BASE}wiki/pages/${selectedPage}.html`;
-    const styleUrl = `${RAW_BASE}wiki/static/style.css`;
-    const denmarkUrl = `${RAW_BASE}wiki/static/denmark.css`;
-
     Promise.all([
-      fetchRaw(htmlUrl, token),
-      fetchRaw(styleUrl, token).catch(() => ''),
-      fetchRaw(denmarkUrl, token).catch(() => ''),
+      fetchRaw(`wiki/pages/${selectedPage}.html`),
+      fetchRaw('wiki/static/style.css').catch(() => ''),
+      fetchRaw('wiki/static/denmark.css').catch(() => ''),
     ])
       .then(([html, style, denmark]) => {
         setRawHtml(html);
