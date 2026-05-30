@@ -23,6 +23,7 @@ function buildHtml(rawHtml, css) {
   const injectedScript = `<script>
 (function() {
   function set(sel, val) {
+    if (!val) return;
     var el = document.querySelector(sel);
     if (el) el.textContent = val;
   }
@@ -34,9 +35,9 @@ function buildHtml(rawHtml, css) {
       var sec = sections[i];
       if (!sec) return;
       var h3 = sec.querySelector('h3');
-      if (h3) h3.textContent = s.heading;
+      if (h3 && s.heading) h3.textContent = s.heading;
       var body = sec.querySelector('.placeholder-block');
-      if (body) body.textContent = s.body;
+      if (body && s.body) body.textContent = s.body;
     });
   }
   window.addEventListener('message', function(e) {
