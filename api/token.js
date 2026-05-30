@@ -17,7 +17,8 @@ export default async function handler(req, res) {
   });
 
   try {
-    const upstream = await fetch('https://gitlab.com/oauth/token', {
+    const gitlabHost = process.env.GITLAB_HOST || 'gitlab.igem.org';
+    const upstream = await fetch(`https://${gitlabHost}/oauth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString(),

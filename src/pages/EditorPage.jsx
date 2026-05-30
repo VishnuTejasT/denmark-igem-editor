@@ -30,7 +30,8 @@ export default function EditorPage() {
       navigate('/');
       return;
     }
-    fetch('https://gitlab.com/api/v4/user', {
+    const gitlabHost = import.meta.env.VITE_GITLAB_HOST || 'gitlab.igem.org';
+    fetch(`https://${gitlabHost}/api/v4/user`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(r => r.json())

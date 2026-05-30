@@ -1,4 +1,5 @@
-const BASE = 'https://gitlab.com/api/v4';
+const GITLAB_HOST = import.meta.env.VITE_GITLAB_HOST || 'gitlab.igem.org';
+const BASE = `https://${GITLAB_HOST}/api/v4`;
 const PROJECT_ID = '4422';
 const BRANCH = 'feature/content-system';
 
