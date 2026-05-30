@@ -22,22 +22,21 @@ function buildHtml(rawHtml, css) {
 
   const injectedScript = `<script>
 (function() {
-  function set(sel, val) {
-    if (!val) return;
-    var el = document.querySelector(sel);
-    if (el) el.textContent = val;
+  var originals = new WeakMap();
+  function set(el, val) {
+    if (!el) return;
+    if (!originals.has(el)) originals.set(el, el.innerHTML);
+    el.innerHTML = val ? val : originals.get(el);
   }
   function applyContent(c) {
-    set('.page-hero h2', c.title);
-    set('.page-hero .summary', c.intro);
+    set(document.querySelector('.page-hero h2'), c.title);
+    set(document.querySelector('.page-hero .summary'), c.intro);
     var sections = document.querySelectorAll('.toc-section');
     (c.sections || []).forEach(function(s, i) {
       var sec = sections[i];
       if (!sec) return;
-      var h3 = sec.querySelector('h3');
-      if (h3 && s.heading) h3.textContent = s.heading;
-      var body = sec.querySelector('.placeholder-block');
-      if (body && s.body) body.textContent = s.body;
+      set(sec.querySelector('h3'), s.heading);
+      set(sec.querySelector('.placeholder-block'), s.body);
     });
   }
   window.addEventListener('message', function(e) {
@@ -58,6 +57,7 @@ function buildHtml(rawHtml, css) {
 export default function Preview({ selectedPage, token, content }) {
   const iframeRef = useRef(null);
   const blobUrlRef = useRef(null);
+  const prevSectionsLenRef = useRef(null);
   const contentRef = useRef(content);
   contentRef.current = content;
   const [rawHtml, setRawHtml] = useState(null);
@@ -120,7 +120,22 @@ export default function Preview({ selectedPage, token, content }) {
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe?.contentWindow || !rawHtml) return;
-    iframe.contentWindow.postMessage({ type: 'WIKI_CONTENT', content }, '*');
+    const newLen = content?.sections?.length ?? 0;
+    const prevLen = prevSectionsLenRef.current;
+    prevSectionsLenRef.current = newLen;
+    if (prevLen !== null && newLen !== prevLen) {
+      const html = buildHtml(rawHtml, css);
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = url;
+      iframe.onload = () => {
+        iframe.contentWindow?.postMessage({ type: 'WIKI_CONTENT', content }, '*');
+      };
+      iframe.src = url;
+    } else {
+      iframe.contentWindow.postMessage({ type: 'WIKI_CONTENT', content }, '*');
+    }
   }, [content, rawHtml]);
 
   if (!selectedPage) {
