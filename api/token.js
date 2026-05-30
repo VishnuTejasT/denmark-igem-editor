@@ -17,20 +17,40 @@ export default async function handler(req, res) {
   });
 
   try {
-    const gitlabHost = process.env.GITLAB_HOST || 'gitlab.igem.org';
-    const upstream = await fetch(`https://${gitlabHost}/oauth/token`, {
+    const rawHost = process.env.GITLAB_HOST || 'gitlab.igem.org';
+    const gitlabHost = rawHost.replace(/^https?:\/\//, '');
+    const tokenUrl = `https://${gitlabHost}/oauth/token`;
+    console.log('[token] POST', tokenUrl);
+
+    const upstream = await fetch(tokenUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString(),
     });
-    const data = await upstream.json();
+
+    let data;
+    const contentType = upstream.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      data = await upstream.json();
+    } else {
+      const text = await upstream.text();
+      console.error('[token] Non-JSON response from GitLab:', upstream.status, text.slice(0, 500));
+      return res.status(502).json({ error: `GitLab returned non-JSON (${upstream.status})`, body: text.slice(0, 500) });
+    }
+
+    console.log('[token] GitLab response status:', upstream.status, 'body:', JSON.stringify(data));
 
     if (!upstream.ok) {
-      return res.status(400).json({ error: data.error_description || 'Token exchange failed' });
+      return res.status(400).json({
+        error: data.error_description || data.error || 'Token exchange failed',
+        gitlab_status: upstream.status,
+        gitlab_error: data,
+      });
     }
 
     return res.status(200).json({ access_token: data.access_token });
-  } catch {
-    return res.status(500).json({ error: 'Failed to reach GitLab' });
+  } catch (err) {
+    console.error('[token] Fetch threw:', err);
+    return res.status(500).json({ error: 'Failed to reach GitLab', detail: err.message });
   }
 }

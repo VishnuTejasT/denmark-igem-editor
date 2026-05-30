@@ -19,16 +19,22 @@ export default function CallbackPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code, redirect_uri: REDIRECT_URI }),
     })
-      .then(res => res.json())
-      .then(data => {
+      .then(async res => {
+        const data = await res.json();
+        console.log('[callback] /api/token response', res.status, data);
         if (data.access_token) {
           sessionStorage.setItem('gitlab_token', data.access_token);
           navigate('/editor');
         } else {
-          setError(data.error || 'Authentication failed.');
+          const detail = data.detail || (data.gitlab_error ? JSON.stringify(data.gitlab_error) : null);
+          const msg = [data.error, detail].filter(Boolean).join(' — ');
+          setError(msg || 'Authentication failed.');
         }
       })
-      .catch(() => setError('Network error during authentication.'));
+      .catch(err => {
+        console.error('[callback] Network error:', err);
+        setError(`Network error: ${err.message}`);
+      });
   }, [navigate]);
 
   if (error) {
