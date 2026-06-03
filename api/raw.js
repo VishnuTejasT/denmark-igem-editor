@@ -1,58 +1,28 @@
-const REPO_RAW_BASE =
-  'https://gitlab.igem.org/vishnutejast/denmarkwiki/-/raw/feature/content-system/';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const cache = new Map(); // key: safePath → { body, contentType, expiresAt }
+const CACHE_DIR = join(process.cwd(), 'public/wiki-cache');
 
-export default async function handler(req, res) {
-  const { path, token } = req.query;
-  if (!path) {
-    return res.status(400).json({ error: 'Missing path query parameter' });
-  }
-  if (!token) {
-    return res.status(400).json({ error: 'Missing token query parameter' });
-  }
+export default function handler(req, res) {
+  const { path } = req.query;
+  if (!path) return res.status(400).json({ error: 'Missing path' });
 
-  // Prevent path traversal
   const safePath = path.replace(/\.\./g, '').replace(/^\/+/, '');
+  const filePath = join(CACHE_DIR, safePath);
 
-  const cached = cache.get(safePath);
-  if (cached && cached.expiresAt > Date.now()) {
-    res.setHeader('Content-Type', cached.contentType);
-    res.setHeader('Cache-Control', 'no-store');
-    res.setHeader('X-Cache', 'HIT');
-    return res.status(200).send(cached.body);
+  if (!filePath.startsWith(CACHE_DIR)) {
+    return res.status(403).json({ error: 'Forbidden' });
   }
 
-  const url = `${REPO_RAW_BASE}${safePath}`;
-
+  let content;
   try {
-    const upstream = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!upstream.ok) {
-      const body = await upstream.text().catch(() => '');
-      console.error('[raw] GitLab error', upstream.status, safePath, body.slice(0, 500));
-      return res.status(upstream.status).json({
-        error: `GitLab returned ${upstream.status} for ${safePath}`,
-        detail: body.slice(0, 500),
-      });
-    }
-
-    const contentType = upstream.headers.get('content-type') || 'text/plain';
-    const body = await upstream.text();
-
-    cache.set(safePath, { body, contentType, expiresAt: Date.now() + CACHE_TTL_MS });
-
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'no-store');
-    res.setHeader('X-Cache', 'MISS');
-    return res.status(200).send(body);
-  } catch (err) {
-    console.error('[raw] fetch threw:', err);
-    return res.status(500).json({ error: 'Failed to fetch from GitLab', detail: err.message });
+    content = readFileSync(filePath, 'utf8');
+  } catch {
+    return res.status(404).json({ error: `Not found: ${safePath}` });
   }
+
+  const contentType = safePath.endsWith('.css') ? 'text/css' : 'text/html';
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  return res.status(200).send(content);
 }

@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/raw.js": {
+      "includeFiles": "public/wiki-cache/**"
+    }
+  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]

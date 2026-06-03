@@ -3,8 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 const STATIC_RAW_BASE =
   'https://gitlab.igem.org/vishnutejast/denmarkwiki/-/raw/feature/content-system/';
 
-async function fetchRaw(path, token) {
-  const url = `/api/raw?path=${encodeURIComponent(path)}&token=${encodeURIComponent(token)}`;
+async function fetchRaw(path) {
+  const url = `/api/raw?path=${encodeURIComponent(path)}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${res.status} fetching ${path}`);
   return res.text();
@@ -56,7 +56,7 @@ function buildHtml(rawHtml, css) {
   return html;
 }
 
-export default function Preview({ selectedPage, token, content }) {
+export default function Preview({ selectedPage, content }) {
   const iframeRef = useRef(null);
   const blobUrlRef = useRef(null);
   const prevSectionsLenRef = useRef(null);
@@ -78,9 +78,9 @@ export default function Preview({ selectedPage, token, content }) {
     setFetchError(null);
 
     Promise.all([
-      fetchRaw(`wiki/pages/${selectedPage}.html`, token),
-      fetchRaw('wiki/static/style.css', token).catch(() => ''),
-      fetchRaw('wiki/static/denmark.css', token).catch(() => ''),
+      fetchRaw(`wiki/pages/${selectedPage}.html`),
+      fetchRaw('wiki/static/style.css').catch(() => ''),
+      fetchRaw('wiki/static/denmark.css').catch(() => ''),
     ])
       .then(([html, style, denmark]) => {
         setRawHtml(html);
@@ -88,7 +88,7 @@ export default function Preview({ selectedPage, token, content }) {
       })
       .catch(err => setFetchError(err.message))
       .finally(() => setLoading(false));
-  }, [selectedPage, token]);
+  }, [selectedPage]);
 
   // Rebuild iframe blob URL only when the page template changes
   useEffect(() => {

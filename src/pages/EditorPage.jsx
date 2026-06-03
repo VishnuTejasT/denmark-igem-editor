@@ -8,7 +8,7 @@ const PAGES = [
   'attributions', 'contribution', 'education', 'engineering',
   'entrepreneurship', 'hardware', 'human-practices', 'implementation',
   'model', 'notebook', 'parts', 'project', 'protocols', 'safety',
-  'software', 'wetlab',
+  'software', 'software-2', 'software-3', 'team', 'wetlab',
 ];
 
 const EMPTY = { title: '', intro: '', sections: [] };
@@ -135,7 +135,7 @@ export default function EditorPage() {
               <Editor content={content} onChange={setContent} />
             </div>
             <div style={{ ...styles.pane, background: '#fafafa', borderLeft: '1px solid #e0e0e0', padding: 0 }}>
-              <Preview selectedPage={selectedPage} token={token} content={content} />
+              <Preview selectedPage={selectedPage} content={content} />
             </div>
           </>
         )}
