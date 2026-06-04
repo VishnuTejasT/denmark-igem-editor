@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 const STATIC_RAW_BASE =
-  'https://gitlab.igem.org/vishnutejast/denmarkwiki/-/raw/feature/content-system/';
+  `https://gitlab.igem.org/${import.meta.env.VITE_GITLAB_REPO_PATH || 'vishnutejast/denmarkwiki'}/-/raw/feature/content-system/`;
 
 async function fetchRaw(path) {
   const url = `/api/raw?path=${encodeURIComponent(path)}`;

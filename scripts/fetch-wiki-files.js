@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 
-const PROJECT = 'vishnutejast%2Fdenmarkwiki';
+const PROJECT = encodeURIComponent(process.env.GITLAB_REPO_PATH || 'vishnutejast/denmarkwiki');
 const REF = 'feature%2Fcontent-system';
 const API_BASE = `https://gitlab.igem.org/api/v4/projects/${PROJECT}/repository/files`;
 const TOKEN = process.env.GITLAB_TOKEN;
