@@ -6,7 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 
 const PROJECT = encodeURIComponent(process.env.GITLAB_REPO_PATH || 'vishnutejast/denmarkwiki');
-const REF = 'feature%2Fcontent-system';
+const REF = encodeURIComponent(process.env.GITLAB_BRANCH || 'main');
 const API_BASE = `https://gitlab.igem.org/api/v4/projects/${PROJECT}/repository/files`;
 const TOKEN = process.env.GITLAB_TOKEN;
 
@@ -34,8 +34,8 @@ const FILES = [
   'wiki/pages/software-3.html',
   'wiki/pages/team.html',
   'wiki/pages/wetlab.html',
-  'wiki/static/style.css',
-  'wiki/static/denmark.css',
+  'static/style.css',
+  'static/denmark.css',
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

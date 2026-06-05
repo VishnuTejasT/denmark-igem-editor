@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 const STATIC_RAW_BASE =
-  `https://gitlab.igem.org/${import.meta.env.VITE_GITLAB_REPO_PATH || 'vishnutejast/denmarkwiki'}/-/raw/feature/content-system/`;
+  `https://gitlab.igem.org/${import.meta.env.VITE_GITLAB_REPO_PATH || 'vishnutejast/denmarkwiki'}/-/raw/${import.meta.env.VITE_GITLAB_BRANCH || 'main'}/`;
 
 async function fetchRaw(path) {
   const url = `/api/raw?path=${encodeURIComponent(path)}`;
@@ -12,8 +12,8 @@ async function fetchRaw(path) {
 
 function rewriteAssetUrls(html) {
   return html
-    .replace(/(src|href)="static\//g, `$1="${STATIC_RAW_BASE}wiki/static/`)
-    .replace(/(src|href)='static\//g, `$1='${STATIC_RAW_BASE}wiki/static/`);
+    .replace(/(src|href)="static\//g, `$1="${STATIC_RAW_BASE}static/`)
+    .replace(/(src|href)='static\//g, `$1='${STATIC_RAW_BASE}static/`);
 }
 
 function buildHtml(rawHtml, css) {
@@ -79,8 +79,8 @@ export default function Preview({ selectedPage, content }) {
 
     Promise.all([
       fetchRaw(`wiki/pages/${selectedPage}.html`),
-      fetchRaw('wiki/static/style.css').catch(() => ''),
-      fetchRaw('wiki/static/denmark.css').catch(() => ''),
+      fetchRaw('static/style.css').catch(() => ''),
+      fetchRaw('static/denmark.css').catch(() => ''),
     ])
       .then(([html, style, denmark]) => {
         setRawHtml(html);
