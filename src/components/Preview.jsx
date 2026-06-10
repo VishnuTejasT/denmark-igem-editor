@@ -26,21 +26,20 @@ function buildHtml(rawHtml, css, content) {
   const injectedScript = `<script>
 (function() {
   var content = ${contentJson};
-  var originals = new WeakMap();
-  function set(el, val) {
-    if (!el) return;
-    if (!originals.has(el)) originals.set(el, el.innerHTML);
-    el.innerHTML = val ? val : originals.get(el);
-  }
   function applyContent(c) {
-    set(document.querySelector('.page-hero h2'), c.title);
-    set(document.querySelector('.page-hero .summary'), c.intro);
+    var h2 = document.querySelector('.page-hero h2');
+    if (h2 && c.title) h2.textContent = c.title;
+    var summary = document.querySelector('.page-hero .summary');
+    if (summary && c.intro) summary.textContent = c.intro;
     (c.sections || []).forEach(function(s) {
       var sec = document.querySelector('.toc-section#' + s.id);
       if (!sec) return;
-      set(sec.querySelector('h3'), s.heading);
+      if (s.heading) { var h3 = sec.querySelector('h3'); if (h3) h3.textContent = s.heading; }
       var firstBlock = (s.blocks || [])[0];
-      if (firstBlock) set(sec.querySelector('.section-block'), firstBlock.body);
+      if (firstBlock && firstBlock.body) {
+        var block = sec.querySelector('.section-block');
+        if (block) block.innerHTML = firstBlock.body;
+      }
     });
   }
   if (document.readyState === 'loading') {
