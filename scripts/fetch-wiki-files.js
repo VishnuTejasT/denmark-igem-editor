@@ -1,9 +1,12 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { config } from 'dotenv';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
+
+config({ path: join(ROOT, '.env.local') });
 
 const PROJECT = encodeURIComponent(process.env.GITLAB_REPO_PATH || 'vishnutejast/denmarkwiki');
 const REF = encodeURIComponent(process.env.GITLAB_BRANCH || 'main');

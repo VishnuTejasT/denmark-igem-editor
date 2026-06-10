@@ -1,0 +1,62 @@
+@font-face {
+  font-family: 'Fredoka One';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://static.igem.wiki/teams/6112/wiki/betterfonts/fredoka-regular.ttf') format('truetype');
+}
+
+
+/* Denmark-GA branding */
+
+
+:root {
+  /* Primary colors */
+  --brand-dark:   #880909;
+  --brand-deep:   #9d0404;
+  --brand:        #c01919;
+  --brand-bright: #db2828;
+  --brand-soft:   #de3e3e;
+
+  /* backgrounds */
+  --bg-1:   #f2eee7;
+  --bg-2:   #f1efea;
+  --beige:  #c9b197;
+  --muted:  #8b867c;
+  --muted-2: #808080;
+  --text:   #1a1412;
+  --white:  #ffffff;
+
+  /* Alias */
+  --accent: var(--brand);
+}
+
+/* Font stacks — based on brand guide */
+body { font-family: 'Crimson Pro', Palatino, 'Palatino Linotype', serif; color: var(--text); }
+h1 { font-family: 'Playfair Display', Georgia, serif; }
+h2 { font-family: 'Noto Serif', Georgia, serif; }
+h3, h4, h5 { font-family: 'Raleway', system-ui, sans-serif; }
+code, pre, kbd, samp { font-family: 'Space Mono', 'Courier New', monospace; }
+
+/* Brand color applications */
+.topnav    { background: var(--white); }
+.brand     { color: var(--brand-dark); }
+.home-hero { background: var(--bg-1); }
+.page-hero { background: var(--bg-1); }
+
+.page-hero-index { background-image: url('https://static.igem.wiki/teams/6112/wiki/indexphoto.avif'); background-size: 100% auto; background-position: center top; background-repeat: no-repeat; aspect-ratio: 8362 / 5417; min-height: unset; position: relative; }
+.page-hero-index::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 5%; background: linear-gradient(to bottom, transparent, #f2eee7); pointer-events: none; }
+.page-hero-index .teamName { position: absolute; top: -5%; left: 20%; width: 50%; margin: 0; background: rgba(242, 238, 231, 0); padding: 6px 10px; border-radius: 25px; }
+
+.page-hero-team { background-image: url('https://static.igem.wiki/teams/6112/wiki/teampicture.avif'); background-size: cover; background-position: center; background-repeat: no-repeat; min-height: 575px; display: flex; align-items: flex-end; }
+.page-hero-team .container { background: rgba(0, 0, 0, 0.45); padding: 20px 28px; border-radius: 6px; margin-bottom: 16px; text-align: center; }
+.page-hero-team h2 { color: #fff; }
+.page-hero-team .summary { color: rgba(255,255,255,0.85); }
+
+.site-footer { background: var(--brand-deep); }
+
+/* Inline accent helpers */
+.text-brand  { color: var(--brand); }
+.text-brand-dark { color: var(--brand-dark); }
+.bg-brand    { background: var(--brand); color: var(--white); }
+.border-brand { border-color: var(--brand); }
