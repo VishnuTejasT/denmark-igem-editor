@@ -68,31 +68,6 @@ export default function Editor({ content, onChange }) {
                   onChange={e => updateBlock(si, bi, 'body', e.target.value)}
                 />
               </Field>
-
-              <Field label="Image URL">
-                <input
-                  style={styles.input}
-                  value={block.image}
-                  onChange={e => updateBlock(si, bi, 'image', e.target.value)}
-                />
-              </Field>
-
-              <Field label="Caption">
-                <input
-                  style={styles.input}
-                  value={block.caption}
-                  onChange={e => updateBlock(si, bi, 'caption', e.target.value)}
-                />
-              </Field>
-
-              <Field label="List (one item per line)">
-                <textarea
-                  style={{ ...styles.input, ...styles.textarea }}
-                  value={block.list.join('\n')}
-                  rows={3}
-                  onChange={e => updateBlock(si, bi, 'list', e.target.value.split('\n'))}
-                />
-              </Field>
             </div>
           ))}
 

@@ -32,9 +32,8 @@ function buildHtml(rawHtml, css) {
   function applyContent(c) {
     set(document.querySelector('.page-hero h2'), c.title);
     set(document.querySelector('.page-hero .summary'), c.intro);
-    var sections = document.querySelectorAll('.toc-section');
-    (c.sections || []).forEach(function(s, i) {
-      var sec = sections[i];
+    (c.sections || []).forEach(function(s) {
+      var sec = document.querySelector('.toc-section#' + s.id);
       if (!sec) return;
       set(sec.querySelector('h3'), s.heading);
       var firstBlock = (s.blocks || [])[0];
