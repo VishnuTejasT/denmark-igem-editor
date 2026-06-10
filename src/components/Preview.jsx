@@ -19,6 +19,8 @@ function rewriteAssetUrls(html) {
 function buildHtml(rawHtml, css, content) {
   let html = rewriteAssetUrls(rawHtml);
 
+  const cspMeta = `<meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline' 'unsafe-eval' blob:;">`;
+
   const injectedStyle = css ? `<style>${css}</style>` : '';
 
   const contentJson = JSON.stringify(content || {}).replace(/<\/script/gi, '<\\/script');
@@ -42,18 +44,26 @@ function buildHtml(rawHtml, css, content) {
       }
     });
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() { applyContent(content); });
-  } else {
+  function runApplyContent() {
+    console.log('applyContent called', content.sections ? content.sections.length : undefined);
     applyContent(content);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runApplyContent);
+  } else {
+    runApplyContent();
   }
 })();
 <\/script>`;
 
+  if (html.includes('<head>')) {
+    html = html.replace('<head>', '<head>' + cspMeta);
+  }
+
   if (html.includes('</head>')) {
     html = html.replace('</head>', injectedStyle + injectedScript + '</head>');
   } else {
-    html = injectedStyle + injectedScript + html;
+    html = cspMeta + injectedStyle + injectedScript + html;
   }
 
   return html;
@@ -94,6 +104,7 @@ export default function Preview({ selectedPage, content }) {
   useEffect(() => {
     if (!rawHtml) return;
 
+    console.log('rebuilding blob', JSON.stringify(content || {}).slice(0, 50));
     const html = buildHtml(rawHtml, css, content);
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
