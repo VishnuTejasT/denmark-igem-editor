@@ -13,6 +13,22 @@ const PAGES = [
 
 const EMPTY = { title: '', intro: '', sections: [] };
 
+function normalizeContent(content) {
+  const sections = (content.sections || []).map(section => {
+    if (section.blocks) return section;
+    return {
+      ...section,
+      blocks: [{
+        body: section.body || '',
+        image: section.image || '',
+        caption: section.caption || '',
+        list: section.list || [],
+      }],
+    };
+  });
+  return { ...content, sections };
+}
+
 export default function EditorPage() {
   const navigate = useNavigate();
   const token = sessionStorage.getItem('gitlab_token');
@@ -51,7 +67,7 @@ export default function EditorPage() {
     setLoading(true);
     try {
       const { content: fetched, lastCommitId: cid } = await fetchPage(token, pageName);
-      setContent(fetched);
+      setContent(normalizeContent(fetched));
       setLastCommitId(cid);
     } catch (e) {
       setStatus({ type: 'error', message: e.message });

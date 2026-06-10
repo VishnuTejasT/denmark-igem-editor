@@ -1,18 +1,32 @@
+const EMPTY_BLOCK = { body: '', image: '', caption: '', list: [] };
+
 export default function Editor({ content, onChange }) {
   const set = (key, value) => onChange({ ...content, [key]: value });
 
-  const updateSection = (i, key, value) => {
-    const sections = content.sections.map((s, idx) =>
-      idx === i ? { ...s, [key]: value } : s
+  const updateBlock = (sectionIdx, blockIdx, key, value) => {
+    const sections = content.sections.map((s, si) => {
+      if (si !== sectionIdx) return s;
+      const blocks = s.blocks.map((b, bi) =>
+        bi === blockIdx ? { ...b, [key]: value } : b
+      );
+      return { ...s, blocks };
+    });
+    onChange({ ...content, sections });
+  };
+
+  const addBlock = (sectionIdx) => {
+    const sections = content.sections.map((s, si) =>
+      si === sectionIdx ? { ...s, blocks: [...s.blocks, { ...EMPTY_BLOCK }] } : s
     );
     onChange({ ...content, sections });
   };
 
-  const addSection = () =>
-    onChange({ ...content, sections: [...content.sections, { heading: '', body: '' }] });
-
-  const removeSection = (i) =>
-    onChange({ ...content, sections: content.sections.filter((_, idx) => idx !== i) });
+  const removeBlock = (sectionIdx, blockIdx) => {
+    const sections = content.sections.map((s, si) =>
+      si === sectionIdx ? { ...s, blocks: s.blocks.filter((_, bi) => bi !== blockIdx) } : s
+    );
+    onChange({ ...content, sections });
+  };
 
   return (
     <div style={{ maxWidth: 680 }}>
@@ -33,32 +47,56 @@ export default function Editor({ content, onChange }) {
         />
       </Field>
 
-      <div style={styles.sectionHeader}>
-        <span style={{ fontWeight: 600 }}>Sections</span>
-        <button style={styles.addBtn} onClick={addSection}>+ Add section</button>
-      </div>
-
-      {content.sections.map((section, i) => (
-        <div key={i} style={styles.sectionCard}>
+      {content.sections.map((section, si) => (
+        <div key={section.id} style={styles.sectionCard}>
           <div style={styles.sectionTop}>
-            <span style={{ fontWeight: 600, color: '#555' }}>Section {i + 1}</span>
-            <button style={styles.removeBtn} onClick={() => removeSection(i)}>Remove</button>
+            <span style={styles.sectionLabel}>{section.heading}</span>
           </div>
-          <Field label="Heading">
-            <input
-              style={styles.input}
-              value={section.heading}
-              onChange={e => updateSection(i, 'heading', e.target.value)}
-            />
-          </Field>
-          <Field label="Body">
-            <textarea
-              style={{ ...styles.input, ...styles.textarea }}
-              value={section.body}
-              rows={6}
-              onChange={e => updateSection(i, 'body', e.target.value)}
-            />
-          </Field>
+
+          {section.blocks.map((block, bi) => (
+            <div key={bi} style={styles.blockCard}>
+              <div style={styles.blockTop}>
+                <span style={{ fontWeight: 600, color: '#555' }}>Block {bi + 1}</span>
+                <button style={styles.removeBtn} onClick={() => removeBlock(si, bi)}>Remove</button>
+              </div>
+
+              <Field label="Body">
+                <textarea
+                  style={{ ...styles.input, ...styles.textarea }}
+                  value={block.body}
+                  rows={4}
+                  onChange={e => updateBlock(si, bi, 'body', e.target.value)}
+                />
+              </Field>
+
+              <Field label="Image URL">
+                <input
+                  style={styles.input}
+                  value={block.image}
+                  onChange={e => updateBlock(si, bi, 'image', e.target.value)}
+                />
+              </Field>
+
+              <Field label="Caption">
+                <input
+                  style={styles.input}
+                  value={block.caption}
+                  onChange={e => updateBlock(si, bi, 'caption', e.target.value)}
+                />
+              </Field>
+
+              <Field label="List (one item per line)">
+                <textarea
+                  style={{ ...styles.input, ...styles.textarea }}
+                  value={block.list.join('\n')}
+                  rows={3}
+                  onChange={e => updateBlock(si, bi, 'list', e.target.value.split('\n'))}
+                />
+              </Field>
+            </div>
+          ))}
+
+          <button style={styles.addBtn} onClick={() => addBlock(si)}>+ Add block</button>
         </div>
       ))}
     </div>
@@ -90,12 +128,6 @@ const styles = {
     fontFamily: 'inherit',
     lineHeight: 1.5,
   },
-  sectionHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
   addBtn: {
     padding: '5px 12px',
     borderRadius: 6,
@@ -112,10 +144,25 @@ const styles = {
     marginBottom: 14,
   },
   sectionTop: {
+    marginBottom: 12,
+  },
+  sectionLabel: {
+    fontWeight: 600,
+    fontSize: 15,
+    color: '#222',
+  },
+  blockCard: {
+    border: '1px solid #eee',
+    borderRadius: 6,
+    padding: 12,
+    marginBottom: 12,
+    background: '#fafafa',
+  },
+  blockTop: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   removeBtn: {
     padding: '4px 10px',

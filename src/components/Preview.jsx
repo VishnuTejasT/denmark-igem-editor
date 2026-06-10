@@ -37,7 +37,8 @@ function buildHtml(rawHtml, css) {
       var sec = sections[i];
       if (!sec) return;
       set(sec.querySelector('h3'), s.heading);
-      set(sec.querySelector('.placeholder-block'), s.body);
+      var firstBlock = (s.blocks || [])[0];
+      if (firstBlock) set(sec.querySelector('.section-block'), firstBlock.body);
     });
   }
   window.addEventListener('message', function(e) {
