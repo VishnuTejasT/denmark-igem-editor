@@ -16,13 +16,16 @@ function rewriteAssetUrls(html) {
     .replace(/(src|href)='static\//g, `$1='${STATIC_RAW_BASE}static/`);
 }
 
-function buildHtml(rawHtml, css) {
+function buildHtml(rawHtml, css, content) {
   let html = rewriteAssetUrls(rawHtml);
 
   const injectedStyle = css ? `<style>${css}</style>` : '';
 
+  const contentJson = JSON.stringify(content || {}).replace(/<\/script/gi, '<\\/script');
+
   const injectedScript = `<script>
 (function() {
+  var content = ${contentJson};
   var originals = new WeakMap();
   function set(el, val) {
     if (!el) return;
@@ -40,10 +43,7 @@ function buildHtml(rawHtml, css) {
       if (firstBlock) set(sec.querySelector('.section-block'), firstBlock.body);
     });
   }
-  window.addEventListener('message', function(e) {
-    console.log('[IFRAME] message received:', e.data && e.data.type, 'sections:', e.data && e.data.content && e.data.content.sections && e.data.content.sections.length);
-    if (e.data && e.data.type === 'WIKI_CONTENT') applyContent(e.data.content);
-  });
+  applyContent(content);
 })();
 <\/script>`;
 
@@ -59,9 +59,6 @@ function buildHtml(rawHtml, css) {
 export default function Preview({ selectedPage, content }) {
   const iframeRef = useRef(null);
   const blobUrlRef = useRef(null);
-  const prevSectionsLenRef = useRef(null);
-  const contentRef = useRef(content);
-  contentRef.current = content;
   const [rawHtml, setRawHtml] = useState(null);
   const [css, setCss] = useState('');
   const [fetchError, setFetchError] = useState(null);
@@ -90,11 +87,11 @@ export default function Preview({ selectedPage, content }) {
       .finally(() => setLoading(false));
   }, [selectedPage]);
 
-  // Rebuild iframe blob URL only when the page template changes
+  // Rebuild the entire iframe blob URL whenever the page template, css, or content changes
   useEffect(() => {
     if (!rawHtml) return;
 
-    const html = buildHtml(rawHtml, css);
+    const html = buildHtml(rawHtml, css, content);
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
 
@@ -102,50 +99,13 @@ export default function Preview({ selectedPage, content }) {
     blobUrlRef.current = url;
 
     const iframe = iframeRef.current;
-    if (!iframe) return;
-
-    iframe.onload = () => {
-      iframe.contentWindow?.postMessage(
-        { type: 'WIKI_CONTENT', content: contentRef.current }, '*'
-      );
-    };
-    iframe.src = url;
+    if (iframe) iframe.src = url;
 
     return () => {
-      iframe.onload = null;
       URL.revokeObjectURL(url);
       blobUrlRef.current = null;
     };
-  }, [rawHtml, css]);
-
-  // Push content updates into the loaded iframe without reloading it
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    const newLen = content?.sections?.length ?? 0;
-    const prevLen = prevSectionsLenRef.current;
-    prevSectionsLenRef.current = newLen;
-
-    console.log('[Preview] content effect fired | newLen:', newLen, 'prevLen:', prevLen, 'rawHtml:', !!rawHtml, 'iframe:', !!iframe);
-
-    if (!rawHtml || !iframe) return;
-
-    if (prevLen !== null && newLen !== prevLen) {
-      console.log('[Preview] REBUILD triggered — section count changed:', prevLen, '→', newLen);
-      const html = buildHtml(rawHtml, css);
-      const blob = new Blob([html], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
-      blobUrlRef.current = url;
-      iframe.onload = () => {
-        console.log('[Preview] postMessage after REBUILD');
-        iframe.contentWindow?.postMessage({ type: 'WIKI_CONTENT', content }, '*');
-      };
-      iframe.src = url;
-    } else if (iframe.contentWindow) {
-      console.log('[Preview] postMessage (no rebuild)');
-      iframe.contentWindow.postMessage({ type: 'WIKI_CONTENT', content }, '*');
-    }
-  }, [content, rawHtml]);
+  }, [rawHtml, css, content]);
 
   if (!selectedPage) {
     return <div style={styles.placeholder}>Select a page to preview.</div>;
