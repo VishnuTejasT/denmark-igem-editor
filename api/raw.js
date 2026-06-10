@@ -24,5 +24,6 @@ export default function handler(req, res) {
   const contentType = safePath.endsWith('.css') ? 'text/css' : 'text/html';
   res.setHeader('Content-Type', contentType);
   res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('Content-Security-Policy', "script-src 'unsafe-inline' 'unsafe-eval' blob: 'self'");
   return res.status(200).send(content);
 }

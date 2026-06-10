@@ -47,7 +47,7 @@ export default function EditorPage() {
       navigate('/');
       return;
     }
-    const gitlabHost = import.meta.env.VITE_GITLAB_HOST || 'gitlab.igem.org';
+    const gitlabHost = (import.meta.env.VITE_GITLAB_HOST || 'gitlab.igem.org').replace(/^https?:\/\//, '');
     fetch(`https://${gitlabHost}/api/v4/user`, {
       headers: { Authorization: `Bearer ${token}` },
     })
