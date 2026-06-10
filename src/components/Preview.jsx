@@ -43,7 +43,11 @@ function buildHtml(rawHtml, css, content) {
       if (firstBlock) set(sec.querySelector('.section-block'), firstBlock.body);
     });
   }
-  applyContent(content);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() { applyContent(content); });
+  } else {
+    applyContent(content);
+  }
 })();
 <\/script>`;
 
