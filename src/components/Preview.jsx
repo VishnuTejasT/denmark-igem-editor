@@ -39,6 +39,7 @@ function buildHtml(rawHtml, css, content) {
     (c.sections || []).forEach(function(s) {
       var sec = document.querySelector('.toc-section#' + s.id);
       if (!sec) return;
+      console.log('sec.id:', sec.id, 'sec.innerHTML:', sec.innerHTML.substring(0, 100));
       if (s.heading) { var h3 = sec.querySelector('h3'); if (h3) h3.textContent = s.heading; }
       var firstBlock = (s.blocks || [])[0];
       if (firstBlock && firstBlock.body) {
