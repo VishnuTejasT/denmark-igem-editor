@@ -18,6 +18,7 @@ function rewriteAssetUrls(html) {
 
 function buildHtml(rawHtml, css, content) {
   let html = rewriteAssetUrls(rawHtml);
+  html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
 
   const cspMeta = `<meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline' 'unsafe-eval' blob:;">`;
 
