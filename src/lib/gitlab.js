@@ -7,7 +7,12 @@ function encodedPath(pageName) {
   return encodeURIComponent(`wiki/content/${pageName}.json`);
 }
 
+const pageCache = new Map();
+
 export async function fetchPage(token, pageName) {
+  if (pageCache.has(pageName)) {
+    return pageCache.get(pageName);
+  }
   const url = `${BASE}/projects/${PROJECT_ID}/repository/files/${encodedPath(pageName)}?ref=${encodeURIComponent(BRANCH)}`;
   const res = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
@@ -17,10 +22,12 @@ export async function fetchPage(token, pageName) {
     throw new Error(err.message || `Failed to load "${pageName}": ${res.statusText}`);
   }
   const data = await res.json();
-  return {
+  const result = {
     content: JSON.parse(atob(data.content)),
     lastCommitId: data.last_commit_id,
   };
+  pageCache.set(pageName, result);
+  return result;
 }
 
 export async function commitPage(token, pageName, content, lastCommitId, authorName, commitMessage) {
