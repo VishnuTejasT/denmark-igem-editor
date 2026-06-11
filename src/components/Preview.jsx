@@ -79,7 +79,6 @@ function buildHtml(rawHtml, css, content) {
 
 export default function Preview({ selectedPage, content }) {
   const iframeRef = useRef(null);
-  const blobUrlRef = useRef(null);
   const [rawHtml, setRawHtml] = useState(null);
   const [css, setCss] = useState('');
   const [fetchError, setFetchError] = useState(null);
@@ -108,25 +107,15 @@ export default function Preview({ selectedPage, content }) {
       .finally(() => setLoading(false));
   }, [selectedPage]);
 
-  // Rebuild the entire iframe blob URL whenever the page template, css, or content changes
+  // Rebuild the iframe content whenever the page template, css, or content changes
   useEffect(() => {
     if (!rawHtml) return;
 
-    console.log('rebuilding blob', JSON.stringify(content || {}).slice(0, 50));
+    console.log('rebuilding preview', JSON.stringify(content || {}).slice(0, 50));
     const html = buildHtml(rawHtml, css, content);
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-
-    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
-    blobUrlRef.current = url;
 
     const iframe = iframeRef.current;
-    if (iframe) iframe.src = url;
-
-    return () => {
-      URL.revokeObjectURL(url);
-      blobUrlRef.current = null;
-    };
+    if (iframe) iframe.srcdoc = html;
   }, [rawHtml, css, content]);
 
   if (!selectedPage) {
