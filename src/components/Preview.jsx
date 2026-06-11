@@ -29,6 +29,8 @@ function buildHtml(rawHtml, css, content) {
 (function() {
   var content = ${contentJson};
   function applyContent(c) {
+    console.log('toc-section#overview found:', !!document.querySelector('.toc-section#overview'));
+    console.log('s.blocks[0].body:', c.sections && c.sections[0] && c.sections[0].blocks && c.sections[0].blocks[0] && c.sections[0].blocks[0].body);
     var h2 = document.querySelector('.page-hero h2');
     if (h2 && c.title) h2.textContent = c.title;
     var summary = document.querySelector('.page-hero .summary');
