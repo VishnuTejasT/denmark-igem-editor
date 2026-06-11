@@ -4,17 +4,6 @@
       "includeFiles": "public/wiki-cache/**"
     }
   },
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Content-Security-Policy",
-          "value": "script-src 'unsafe-inline' 'unsafe-eval' blob: https://gitlab.igem.org"
-        }
-      ]
-    }
-  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
