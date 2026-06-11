@@ -43,7 +43,11 @@ function buildHtml(rawHtml, css, content) {
       var firstBlock = (s.blocks || [])[0];
       if (firstBlock && firstBlock.body) {
         var block = sec.querySelector('.section-block');
-        if (block) block.innerHTML = firstBlock.body;
+        console.log('block found:', !!block);
+        if (block) {
+          block.innerHTML = firstBlock.body;
+          console.log('injected into block:', block.className, 'value:', firstBlock.body.substring(0, 50));
+        }
       }
     });
   }
