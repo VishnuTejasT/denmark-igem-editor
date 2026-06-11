@@ -61,6 +61,9 @@ function buildHtml(rawHtml, css, content) {
   } else {
     runApplyContent();
   }
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'WIKI_CONTENT') applyContent(e.data.content);
+  });
 })();
 <\/script>`;
 
@@ -79,6 +82,7 @@ function buildHtml(rawHtml, css, content) {
 
 export default function Preview({ selectedPage, content }) {
   const iframeRef = useRef(null);
+  const iframeLoadedRef = useRef(false);
   const [rawHtml, setRawHtml] = useState(null);
   const [css, setCss] = useState('');
   const [fetchError, setFetchError] = useState(null);
@@ -107,16 +111,26 @@ export default function Preview({ selectedPage, content }) {
       .finally(() => setLoading(false));
   }, [selectedPage]);
 
-  // Rebuild the iframe content whenever the page template, css, or content changes
+  // Rebuild iframe document only when the page template or css changes
   useEffect(() => {
     if (!rawHtml) return;
 
-    console.log('rebuilding preview', JSON.stringify(content || {}).slice(0, 50));
+    iframeLoadedRef.current = false;
     const html = buildHtml(rawHtml, css, content);
 
     const iframe = iframeRef.current;
     if (iframe) iframe.srcdoc = html;
-  }, [rawHtml, css, content]);
+  }, [rawHtml, css]);
+
+  // Push content updates without reloading the iframe
+  useEffect(() => {
+    if (!rawHtml) return;
+
+    const iframe = iframeRef.current;
+    if (iframe && iframeLoadedRef.current && iframe.contentWindow) {
+      iframe.contentWindow.postMessage({ type: 'WIKI_CONTENT', content }, '*');
+    }
+  }, [content]);
 
   if (!selectedPage) {
     return <div style={styles.placeholder}>Select a page to preview.</div>;
@@ -134,6 +148,13 @@ export default function Preview({ selectedPage, content }) {
       sandbox="allow-scripts allow-same-origin"
       style={styles.frame}
       title="Wiki Preview"
+      onLoad={() => {
+        iframeLoadedRef.current = true;
+        const iframe = iframeRef.current;
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage({ type: 'WIKI_CONTENT', content }, '*');
+        }
+      }}
     />
   );
 }
