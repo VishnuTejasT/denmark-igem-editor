@@ -46,6 +46,9 @@ async function generatePageHtml(pageName, content) {
 
   const doc = new DOMParser().parseFromString(html, 'text/html');
 
+  // Remove content-loader.js — content is now baked in, no runtime fetch needed.
+  doc.querySelectorAll('script[src*="content-loader"]').forEach(s => s.remove());
+
   if (content.title) {
     const h2 = doc.querySelector('.page-hero h2');
     if (h2) h2.textContent = content.title;
