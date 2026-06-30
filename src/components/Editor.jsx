@@ -120,6 +120,62 @@ function CarouselInsertForm({ onInsert, onClose }) {
   );
 }
 
+// ─── Table insert form ───────────────────────────────────────────────────────
+
+function TableInsertForm({ onInsert, onClose }) {
+  const [rows, setRows] = useState(3);
+  const [cols, setCols] = useState(3);
+
+  const handleInsert = () => {
+    const r = Math.max(1, Math.min(20, Number(rows) || 1));
+    const c = Math.max(1, Math.min(10, Number(cols) || 1));
+
+    const header = Array.from({ length: c }, (_, i) => `Header ${i + 1}`);
+    const divider = Array.from({ length: c }, () => '---');
+    const body = Array.from({ length: r }, () => Array.from({ length: c }, () => 'Cell'));
+
+    const toRow = cells => `| ${cells.join(' | ')} |`;
+    const table = [toRow(header), toRow(divider), ...body.map(toRow)].join('\n');
+
+    onInsert(`\n${table}\n`);
+    onClose();
+  };
+
+  return (
+    <div style={formStyles.panel}>
+      <div style={formStyles.panelTitle}>Insert Table</div>
+      <div style={formStyles.row}>
+        <label style={formStyles.tableLabel}>Rows</label>
+        <input
+          style={{ ...formStyles.input, width: 60 }}
+          type="number"
+          min={1}
+          max={20}
+          value={rows}
+          onChange={e => setRows(e.target.value)}
+        />
+        <label style={formStyles.tableLabel}>Columns</label>
+        <input
+          style={{ ...formStyles.input, width: 60 }}
+          type="number"
+          min={1}
+          max={10}
+          value={cols}
+          onChange={e => setCols(e.target.value)}
+        />
+        <div style={{ flex: 1 }} />
+        <button style={formStyles.insertBtn} onClick={handleInsert}>Insert</button>
+        <button style={formStyles.cancelBtn} onClick={onClose}>Cancel</button>
+      </div>
+      <div style={formStyles.tableHint}>
+        Edit cell text directly in the Markdown below. Inside any cell you can use
+        <code> **bold** </code>, <code> *italic* </code>, <code> ~~strikethrough~~ </code>,
+        and <code>&lt;u&gt;underline&lt;/u&gt;</code>.
+      </div>
+    </div>
+  );
+}
+
 // ─── Main editor component ───────────────────────────────────────────────────
 
 export default function Editor({ content, onChange }) {
@@ -197,6 +253,12 @@ export default function Editor({ content, onChange }) {
               Carousel
             </button>
             <button
+              style={{ ...styles.snippetBtn, ...(activePanels[section.id] === 'table' ? styles.snippetBtnActive : {}) }}
+              onClick={() => togglePanel(section.id, 'table')}
+            >
+              Table
+            </button>
+            <button
               style={styles.snippetBtn}
               onClick={() => appendToBody(section.id, '\n> **[N]** Author(s). Title. *Journal* Year;Vol:Pages.\n')}
             >
@@ -219,6 +281,12 @@ export default function Editor({ content, onChange }) {
           )}
           {activePanels[section.id] === 'carousel' && (
             <CarouselInsertForm
+              onInsert={snippet => appendToBody(section.id, snippet)}
+              onClose={() => closePanel(section.id)}
+            />
+          )}
+          {activePanels[section.id] === 'table' && (
+            <TableInsertForm
               onInsert={snippet => appendToBody(section.id, snippet)}
               onClose={() => closePanel(section.id)}
             />
@@ -319,4 +387,6 @@ const formStyles = {
     padding: '4px 8px', borderRadius: 5, border: '1px solid #fcc',
     background: '#fff', color: '#c44', cursor: 'pointer', fontSize: 12, flexShrink: 0,
   },
+  tableLabel: { fontSize: 12, color: '#666' },
+  tableHint: { fontSize: 11, color: '#888', lineHeight: 1.6 },
 };
