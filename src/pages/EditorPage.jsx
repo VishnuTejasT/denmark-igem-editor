@@ -131,7 +131,7 @@ export default function EditorPage() {
 
   const hasDraft = (page) => !!sessionStorage.getItem(`wiki_draft_${page}`);
   const unsaved = selectedPage && hasDraft(selectedPage);
-  const canCommit = selectedPage && lastCommitId && !committing && !loading;
+  const canCommit = !!selectedPage && !committing && !loading;
 
   return (
     <div style={styles.shell}>
