@@ -188,6 +188,11 @@ export default function Editor({ content, onChange }) {
     onChange({ ...content, sections });
   };
 
+  const updateHeading = (id, heading) => {
+    const sections = content.sections.map(s => s.id === id ? { ...s, heading } : s);
+    onChange({ ...content, sections });
+  };
+
   const appendToBody = (id, snippet) => {
     const current = content.sections.find(s => s.id === id)?.body || '';
     updateBody(id, current + snippet);
@@ -234,7 +239,12 @@ export default function Editor({ content, onChange }) {
       {content.sections.map(section => (
         <div key={section.id} style={styles.sectionCard}>
           <div style={styles.sectionHeader}>
-            <span style={styles.sectionHeading}>{section.heading}</span>
+            <input
+              style={styles.sectionHeadingInput}
+              value={section.heading}
+              onChange={e => updateHeading(section.id, e.target.value)}
+              placeholder="Section name"
+            />
             <span style={styles.sectionId}>#{section.id}</span>
           </div>
 
@@ -337,7 +347,11 @@ const styles = {
   textarea: { resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 },
   sectionCard: { marginBottom: 28 },
   sectionHeader: { display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 },
-  sectionHeading: { fontWeight: 700, fontSize: 15, color: '#111' },
+  sectionHeadingInput: {
+    fontWeight: 700, fontSize: 15, color: '#111', border: '1px solid #eee',
+    borderRadius: 4, padding: '2px 6px', outline: 'none', flex: 1, minWidth: 0,
+    fontFamily: 'inherit', background: 'transparent',
+  },
   sectionId: { fontSize: 11, color: '#bbb', fontFamily: 'monospace' },
   snippetBar: { display: 'flex', gap: 6, marginBottom: 7, flexWrap: 'wrap' },
   snippetBtn: {

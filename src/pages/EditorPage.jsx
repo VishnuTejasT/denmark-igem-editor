@@ -36,15 +36,17 @@ const STATUS_COLOR = {
 
 function normalizeContent(content, htmlSections) {
   const savedBodies = {};
+  const savedHeadings = {};
   (content.sections || []).forEach(s => {
     savedBodies[s.id] = s.body ?? (s.blocks?.[0]?.body ?? '');
+    if (s.heading) savedHeadings[s.id] = s.heading;
   });
   return {
     title: content.title || '',
     intro: content.intro || '',
     sections: htmlSections.map(({ id, heading }) => ({
       id,
-      heading,
+      heading: savedHeadings[id] || heading,
       body: savedBodies[id] || '',
     })),
   };

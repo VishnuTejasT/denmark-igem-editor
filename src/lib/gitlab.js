@@ -70,6 +70,12 @@ async function generatePageHtml(pageName, content) {
   for (const s of content.sections || []) {
     const sec = doc.querySelector(`.toc-section#${s.id}`);
     if (!sec) continue;
+    if (s.heading) {
+      const h3 = sec.querySelector('h3');
+      if (h3) h3.textContent = s.heading;
+      const tocLink = doc.querySelector(`.toc-nav a[data-toc="${s.id}"]`);
+      if (tocLink) tocLink.textContent = s.heading;
+    }
     const renderedBody = s.body ? marked(s.body) : '';
     if (renderedBody) {
       const block = sec.querySelector('.section-block');

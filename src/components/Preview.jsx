@@ -49,6 +49,12 @@ function buildHtml(rawHtml, css, content) {
     (c.sections || []).forEach(function(s) {
       var sec = document.querySelector('.toc-section#' + s.id);
       if (!sec) return;
+      if (s.heading) {
+        var h3 = sec.querySelector('h3');
+        if (h3) h3.textContent = s.heading;
+        var tocLink = document.querySelector('.toc-nav a[data-toc="' + s.id + '"]');
+        if (tocLink) tocLink.textContent = s.heading;
+      }
       var body = s.body || ((s.blocks || [])[0] || {}).body || '';
       if (body) {
         var block = sec.querySelector('.section-block');
