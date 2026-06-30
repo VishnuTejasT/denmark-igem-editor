@@ -9,7 +9,7 @@ const ROOT = join(__dirname, '..');
 config({ path: join(ROOT, '.env.local') });
 
 const PROJECT = encodeURIComponent(process.env.GITLAB_REPO_PATH || 'vishnutejast/denmarkwiki');
-const REF = encodeURIComponent(process.env.GITLAB_HTML_BRANCH || process.env.GITLAB_BRANCH || 'main');
+const REF = encodeURIComponent(process.env.GITLAB_HTML_BRANCH || 'main');
 const API_BASE = `https://gitlab.igem.org/api/v4/projects/${PROJECT}/repository/files`;
 const TOKEN = process.env.GITLAB_TOKEN;
 
