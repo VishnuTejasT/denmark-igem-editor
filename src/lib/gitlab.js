@@ -25,8 +25,18 @@ export async function fetchPage(token, pageName) {
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
 
   if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      const e = new Error('Session expired — please sign out and sign back in.');
+      e.code = 'AUTH';
+      throw e;
+    }
+    if (res.status === 404) {
+      const e = new Error(`No saved content yet for "${pageName}".`);
+      e.code = 'NOT_FOUND';
+      throw e;
+    }
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `Failed to load "${pageName}": ${res.statusText}`);
+    throw new Error(err.message || `GitLab error ${res.status} loading "${pageName}".`);
   }
 
   const data = await res.json();

@@ -5,13 +5,6 @@ import { parseSectionsFromHtml } from '../lib/htmlParser';
 import Editor from '../components/Editor';
 import Preview from '../components/Preview';
 
-const PAGES = [
-  'attributions', 'contribution', 'education', 'engineering',
-  'entrepreneurship', 'hardware', 'human-practices', 'implementation',
-  'model', 'notebook', 'parts', 'project', 'protocols', 'safety',
-  'software', 'software-2', 'software-3', 'team', 'wetlab',
-];
-
 const EMPTY = { title: '', intro: '', sections: [] };
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -73,6 +66,7 @@ export default function EditorPage() {
   const navigate = useNavigate();
   const token = sessionStorage.getItem('gitlab_token');
 
+  const [pages, setPages]             = useState([]);
   const [username, setUsername]       = useState('');
   const [selectedPage, setSelectedPage] = useState('');
   const [content, setContent]         = useState(EMPTY);
@@ -81,32 +75,48 @@ export default function EditorPage() {
   const [committing, setCommitting]   = useState(false);
   const [commitMessage, setCommitMessage] = useState('');
   const [status, setStatus]           = useState(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [pageStatuses, setPageStatuses] = useState({});
   const [staleWarning, setStaleWarning] = useState(null);
   const [, forceUpdate] = useState(0);
   const pollingRef = useRef(null);
   const lastCommitIdRef = useRef(null);
 
-  // Auth check + username
+  // Auth check + username + manifest
   useEffect(() => {
     if (!token) { navigate('/'); return; }
+
     const host = (import.meta.env.VITE_GITLAB_HOST || 'gitlab.igem.org').replace(/^https?:\/\//, '');
     fetch(`https://${host}/api/v4/user`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => setUsername(d.username || d.name || ''))
       .catch(() => {});
 
-    // Background: load completion status for all pages
-    loadAllStatuses(token);
+    // Load page list from the build-time manifest, then kick off status loading
+    fetch('/wiki-cache/pages-manifest.json')
+      .then(r => r.json())
+      .then(list => {
+        setPages(list);
+        loadAllStatuses(token, list);
+      })
+      .catch(() => {
+        // Manifest missing (local dev without a build) — fall back to empty list
+        setPages([]);
+      });
   }, [token]);
 
-  const loadAllStatuses = (tok) => {
-    PAGES.forEach(async (pageName) => {
+  const loadAllStatuses = (tok, list) => {
+    list.forEach(async (pageName) => {
       try {
         const { content: c } = await fetchPage(tok, pageName);
         setPageStatuses(prev => ({ ...prev, [pageName]: computePageStatus(c) }));
-      } catch {
-        setPageStatuses(prev => ({ ...prev, [pageName]: { status: 'empty', filled: 0, total: 0 } }));
+      } catch (e) {
+        if (e.code === 'AUTH') {
+          setSessionExpired(true);
+        } else {
+          // NOT_FOUND = page not written yet → shows as empty (red), which is correct
+          setPageStatuses(prev => ({ ...prev, [pageName]: { status: 'empty', filled: 0, total: 0 } }));
+        }
       }
     });
   };
@@ -167,7 +177,13 @@ export default function EditorPage() {
       const sections = htmlSections.status === 'fulfilled' ? htmlSections.value : [];
 
       if (jsonResult.status === 'rejected') {
-        setStatus({ type: 'error', message: jsonResult.reason.message });
+        const err = jsonResult.reason;
+        if (err.code === 'AUTH') {
+          setSessionExpired(true);
+        } else if (err.code !== 'NOT_FOUND') {
+          // NOT_FOUND just means no content saved yet — don't show as an error
+          setStatus({ type: 'error', message: err.message });
+        }
         setContent({ title: '', intro: '', sections: sections.map(s => ({ ...s, body: '' })) });
       } else {
         const { content: fetched, lastCommitId: cid } = jsonResult.value;
@@ -277,7 +293,7 @@ export default function EditorPage() {
             <span style={styles.legendItem}><span style={{ ...styles.dot, background: STATUS_COLOR.empty }} />empty</span>
           </div>
 
-          {PAGES.map(p => {
+          {pages.map(p => {
             const ps = pageStatuses[p];
             const dotColor = ps ? STATUS_COLOR[ps.status] : STATUS_COLOR.unknown;
             const fraction = ps && ps.total > 0 ? `${ps.filled}/${ps.total}` : null;
@@ -305,6 +321,19 @@ export default function EditorPage() {
 
         {/* Editor pane */}
         <div style={styles.editorPane}>
+          {/* Session expired banner */}
+          {sessionExpired && (
+            <div style={styles.authBanner}>
+              <span>🔒 Your GitLab session has expired. Sign out and sign back in to continue editing.</span>
+              <button
+                style={styles.reloadBtn}
+                onClick={() => { sessionStorage.removeItem('gitlab_token'); navigate('/'); }}
+              >
+                Sign out
+              </button>
+            </div>
+          )}
+
           {/* Stale warning banner */}
           {staleWarning && (
             <div style={styles.staleBanner}>
@@ -420,6 +449,11 @@ const styles = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
     padding: '10px 16px', background: '#fff8e1', borderBottom: '1px solid #f0c040',
     fontSize: 13, color: '#7a5c00', flexShrink: 0,
+  },
+  authBanner: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+    padding: '10px 16px', background: '#fef2f2', borderBottom: '1px solid #fca5a5',
+    fontSize: 13, color: '#7f1d1d', flexShrink: 0,
   },
   reloadBtn: {
     padding: '4px 12px', borderRadius: 5, border: '1px solid #c09000',
