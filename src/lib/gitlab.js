@@ -68,6 +68,24 @@ async function generatePageHtml(pageName, content) {
 }
 
 export async function commitPage(token, pageName, content, lastCommitId, authorName, commitMessage) {
+  // Detect concurrent edits: re-fetch the current commit ID and compare
+  // with what was loaded when the user opened the page. If someone else
+  // committed in the meantime, refuse and tell the user to reload.
+  if (lastCommitId) {
+    const encoded = encodeURIComponent(jsonPath(pageName));
+    const checkUrl = `${BASE}/projects/${PROJECT_ID}/repository/files/${encoded}?ref=${encodeURIComponent(BRANCH)}`;
+    const checkRes = await fetch(checkUrl, { headers: { Authorization: `Bearer ${token}` } });
+    if (checkRes.ok) {
+      const checkData = await checkRes.json();
+      if (checkData.last_commit_id !== lastCommitId) {
+        throw new Error(
+          'This page was edited by someone else since you opened it. ' +
+          'Please reload the page to get the latest version, then reapply your changes.'
+        );
+      }
+    }
+  }
+
   // Invalidate cache so next load reads fresh JSON.
   pageCache.delete(pageName);
 
