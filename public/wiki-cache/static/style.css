@@ -1142,6 +1142,57 @@ body:has(.nav-item:hover .dropdown) #scroll-progress {
 
 .references-list li { margin-bottom: 8px; }
 
+/* ===== Wiki Tables ===== */
+.section-block table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 28px 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.section-block table th,
+.section-block table td {
+  padding: 20px 24px;
+  text-align: center;
+  vertical-align: middle;
+  border: none;
+  border-bottom: 1px solid var(--beige);
+}
+
+.section-block table thead th {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--brand-dark);
+  border-bottom: 2px solid var(--beige);
+  padding-bottom: 14px;
+}
+
+.section-block table tbody th,
+.section-block table tbody td:first-child {
+  font-weight: 700;
+  color: var(--text);
+  width: 30%;
+}
+
+.section-block table tbody td {
+  color: var(--text);
+}
+
+.section-block table tbody tr:last-child th,
+.section-block table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+@media (max-width: 600px) {
+  .section-block table th,
+  .section-block table td {
+    padding: 14px 12px;
+    font-size: 0.95rem;
+  }
+}
+
 /* ===== Sub-page cards (used on section overview pages) ===== */
 .page-cards {
   display: grid;
