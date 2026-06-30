@@ -5,7 +5,7 @@ marked.use({ gfm: true, breaks: true });
 const GITLAB_HOST = (import.meta.env.VITE_GITLAB_HOST || 'gitlab.igem.org').replace(/^https?:\/\//, '');
 const BASE = `https://${GITLAB_HOST}/api/v4`;
 const PROJECT_ID = import.meta.env.VITE_GITLAB_PROJECT_ID || '4422';
-const BRANCH = import.meta.env.VITE_GITLAB_BRANCH || 'feature/content-system';
+const BRANCH = import.meta.env.VITE_GITLAB_BRANCH || 'main';
 
 function jsonPath(pageName) {
   return `wiki/content/${pageName}.json`;
