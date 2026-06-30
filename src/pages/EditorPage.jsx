@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchPage, commitPage } from '../lib/gitlab';
+import { fetchPage, commitPage, fetchPageMeta, fetchCommitInfo } from '../lib/gitlab';
 import { parseSectionsFromHtml } from '../lib/htmlParser';
 import Editor from '../components/Editor';
 import Preview from '../components/Preview';
@@ -13,6 +13,33 @@ const PAGES = [
 ];
 
 const EMPTY = { title: '', intro: '', sections: [] };
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+function computePageStatus(content) {
+  if (!content) return { status: 'unknown', filled: 0, total: 0 };
+  const sections = content.sections || [];
+  const filled = sections.filter(s => {
+    const body = s.body ?? (s.blocks?.[0]?.body ?? '');
+    return body.trim() && body.trim() !== '--';
+  }).length;
+  const total = sections.length;
+  const hasTitle = !!(content.title?.trim() && content.title !== '--');
+
+  let status;
+  if (filled === total && total > 0 && hasTitle) status = 'complete';
+  else if (filled > 0 || hasTitle) status = 'partial';
+  else status = 'empty';
+
+  return { status, filled, total };
+}
+
+const STATUS_COLOR = {
+  complete: '#16a34a',
+  partial:  '#ca8a04',
+  empty:    '#dc2626',
+  unknown:  '#d1d5db',
+};
 
 function normalizeContent(content, htmlSections) {
   const savedBodies = {};
@@ -40,20 +67,27 @@ async function fetchHtmlSections(pageName) {
   }
 }
 
+// ─── component ──────────────────────────────────────────────────────────────
+
 export default function EditorPage() {
   const navigate = useNavigate();
   const token = sessionStorage.getItem('gitlab_token');
 
-  const [username, setUsername] = useState('');
+  const [username, setUsername]       = useState('');
   const [selectedPage, setSelectedPage] = useState('');
-  const [content, setContent] = useState(EMPTY);
+  const [content, setContent]         = useState(EMPTY);
   const [lastCommitId, setLastCommitId] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [committing, setCommitting] = useState(false);
+  const [loading, setLoading]         = useState(false);
+  const [committing, setCommitting]   = useState(false);
   const [commitMessage, setCommitMessage] = useState('');
-  const [status, setStatus] = useState(null);
+  const [status, setStatus]           = useState(null);
+  const [pageStatuses, setPageStatuses] = useState({});
+  const [staleWarning, setStaleWarning] = useState(null);
   const [, forceUpdate] = useState(0);
+  const pollingRef = useRef(null);
+  const lastCommitIdRef = useRef(null);
 
+  // Auth check + username
   useEffect(() => {
     if (!token) { navigate('/'); return; }
     const host = (import.meta.env.VITE_GITLAB_HOST || 'gitlab.igem.org').replace(/^https?:\/\//, '');
@@ -61,15 +95,66 @@ export default function EditorPage() {
       .then(r => r.json())
       .then(d => setUsername(d.username || d.name || ''))
       .catch(() => {});
-  }, [token, navigate]);
+
+    // Background: load completion status for all pages
+    loadAllStatuses(token);
+  }, [token]);
+
+  const loadAllStatuses = (tok) => {
+    PAGES.forEach(async (pageName) => {
+      try {
+        const { content: c } = await fetchPage(tok, pageName);
+        setPageStatuses(prev => ({ ...prev, [pageName]: computePageStatus(c) }));
+      } catch {
+        setPageStatuses(prev => ({ ...prev, [pageName]: { status: 'empty', filled: 0, total: 0 } }));
+      }
+    });
+  };
+
+  // Update current page status live as user edits
+  useEffect(() => {
+    if (selectedPage) {
+      setPageStatuses(prev => ({ ...prev, [selectedPage]: computePageStatus(content) }));
+    }
+  }, [content, selectedPage]);
+
+  // Poll every 30s for concurrent edits
+  useEffect(() => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    setStaleWarning(null);
+    if (!selectedPage || !token) return;
+
+    pollingRef.current = setInterval(async () => {
+      try {
+        const meta = await fetchPageMeta(token, selectedPage);
+        if (!meta) return;
+        const baseline = lastCommitIdRef.current;
+        if (baseline && meta.lastCommitId !== baseline) {
+          const commit = await fetchCommitInfo(token, meta.lastCommitId);
+          const mins = commit
+            ? Math.max(1, Math.round((Date.now() - new Date(commit.committed_date)) / 60000))
+            : null;
+          setStaleWarning({
+            author: commit?.author_name || 'Someone',
+            mins,
+            message: commit?.message?.split('\n')[0] || '',
+          });
+        }
+      } catch {}
+    }, 30000);
+
+    return () => clearInterval(pollingRef.current);
+  }, [selectedPage, token]);
 
   const handlePageSelect = async (pageName) => {
     if (pageName === selectedPage) return;
     setSelectedPage(pageName);
     setContent(EMPTY);
     setLastCommitId(null);
+    lastCommitIdRef.current = null;
     setStatus(null);
     setCommitMessage('');
+    setStaleWarning(null);
     if (!pageName) return;
 
     setLoading(true);
@@ -89,6 +174,7 @@ export default function EditorPage() {
         const draft = sessionStorage.getItem(`wiki_draft_${pageName}`);
         setContent(draft ? JSON.parse(draft) : normalizeContent(fetched, sections));
         setLastCommitId(cid);
+        lastCommitIdRef.current = cid;
       }
     } catch (e) {
       setStatus({ type: 'error', message: e.message });
@@ -112,6 +198,7 @@ export default function EditorPage() {
       const message = commitMessage.trim() || `Update ${selectedPage} content`;
       await commitPage(token, selectedPage, content, lastCommitId, username, message);
       sessionStorage.removeItem(`wiki_draft_${selectedPage}`);
+      setStaleWarning(null);
       forceUpdate(n => n + 1);
       setStatus({ type: 'success', message: '✓ Committed successfully.' });
       setCommitMessage('');
@@ -135,6 +222,7 @@ export default function EditorPage() {
 
   return (
     <div style={styles.shell}>
+      {/* Header */}
       <header style={styles.header}>
         <strong style={styles.logo}>iGEM Wiki Editor</strong>
 
@@ -178,29 +266,68 @@ export default function EditorPage() {
       </header>
 
       <div style={styles.body}>
+        {/* Sidebar */}
         <aside style={styles.sidebar}>
           <div style={styles.sidebarLabel}>Pages</div>
-          {PAGES.map(p => (
-            <button
-              key={p}
-              style={{
-                ...styles.pageItem,
-                ...(p === selectedPage ? styles.pageItemActive : {}),
-              }}
-              onClick={() => handlePageSelect(p)}
-            >
-              <span style={styles.pageName}>{p}</span>
-              {hasDraft(p) && p !== selectedPage && (
-                <span style={styles.draftDot} title="Unsaved draft">●</span>
-              )}
-              {p === selectedPage && unsaved && (
-                <span style={{ ...styles.draftDot, color: '#e07800' }} title="Unsaved draft">●</span>
-              )}
-            </button>
-          ))}
+
+          {/* Status legend */}
+          <div style={styles.legend}>
+            <span style={styles.legendItem}><span style={{ ...styles.dot, background: STATUS_COLOR.complete }} />done</span>
+            <span style={styles.legendItem}><span style={{ ...styles.dot, background: STATUS_COLOR.partial }} />partial</span>
+            <span style={styles.legendItem}><span style={{ ...styles.dot, background: STATUS_COLOR.empty }} />empty</span>
+          </div>
+
+          {PAGES.map(p => {
+            const ps = pageStatuses[p];
+            const dotColor = ps ? STATUS_COLOR[ps.status] : STATUS_COLOR.unknown;
+            const fraction = ps && ps.total > 0 ? `${ps.filled}/${ps.total}` : null;
+            const isActive = p === selectedPage;
+            const draft = hasDraft(p);
+
+            return (
+              <button
+                key={p}
+                style={{ ...styles.pageItem, ...(isActive ? styles.pageItemActive : {}) }}
+                onClick={() => handlePageSelect(p)}
+              >
+                <span style={{ ...styles.statusDot, background: dotColor }} />
+                <span style={styles.pageName}>{p}</span>
+                {fraction && (
+                  <span style={styles.fraction}>{fraction}</span>
+                )}
+                {draft && (
+                  <span style={styles.draftDot} title="Unsaved draft">●</span>
+                )}
+              </button>
+            );
+          })}
         </aside>
 
+        {/* Editor pane */}
         <div style={styles.editorPane}>
+          {/* Stale warning banner */}
+          {staleWarning && (
+            <div style={styles.staleBanner}>
+              <span>
+                ⚠️ <strong>{staleWarning.author}</strong> committed to this page
+                {staleWarning.mins ? ` ${staleWarning.mins} min ago` : ''}.
+                {staleWarning.message ? ` "${staleWarning.message}"` : ''}
+                {' '}Reload to get the latest before editing.
+              </span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  style={styles.reloadBtn}
+                  onClick={() => { setStaleWarning(null); handlePageSelect(selectedPage); }}
+                >
+                  Reload
+                </button>
+                <button style={styles.dismissBtn} onClick={() => setStaleWarning(null)}>
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
+
           {loading ? (
             <div style={styles.placeholder}>Loading…</div>
           ) : !selectedPage ? (
@@ -210,6 +337,7 @@ export default function EditorPage() {
           )}
         </div>
 
+        {/* Preview pane */}
         <div style={styles.previewPane}>
           <Preview selectedPage={selectedPage} content={content} />
         </div>
@@ -217,6 +345,8 @@ export default function EditorPage() {
     </div>
   );
 }
+
+// ─── styles ─────────────────────────────────────────────────────────────────
 
 const styles = {
   shell: {
@@ -240,37 +370,63 @@ const styles = {
   },
   btn: {
     padding: '5px 14px', borderRadius: 6, border: '1px solid #ddd',
-    background: '#fff', cursor: 'pointer', fontSize: 13, color: '#333',
-    flexShrink: 0,
+    background: '#fff', cursor: 'pointer', fontSize: 13, color: '#333', flexShrink: 0,
   },
   btnPrimary: { background: '#1a73e8', color: '#fff', border: 'none', fontWeight: 600 },
   btnDisabled: { background: '#e8e8e8', color: '#aaa', border: 'none', cursor: 'not-allowed' },
   userBadge: { fontSize: 13, color: '#999', flexShrink: 0 },
   body: { flex: 1, display: 'flex', overflow: 'hidden' },
   sidebar: {
-    width: 200, flexShrink: 0, borderRight: '1px solid #e8e8e8',
+    width: 210, flexShrink: 0, borderRight: '1px solid #e8e8e8',
     background: '#fafafa', overflowY: 'auto', paddingTop: 6,
   },
   sidebarLabel: {
-    padding: '6px 14px 8px', fontSize: 10, fontWeight: 700,
+    padding: '6px 14px 4px', fontSize: 10, fontWeight: 700,
     textTransform: 'uppercase', letterSpacing: '0.1em', color: '#bbb',
   },
+  legend: {
+    display: 'flex', gap: 10, padding: '4px 14px 10px', borderBottom: '1px solid #ebebeb',
+    marginBottom: 4,
+  },
+  legendItem: {
+    display: 'flex', alignItems: 'center', gap: 4,
+    fontSize: 10, color: '#999',
+  },
+  dot: {
+    width: 7, height: 7, borderRadius: '50%', display: 'inline-block', flexShrink: 0,
+  },
   pageItem: {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    display: 'flex', alignItems: 'center', gap: 7,
     width: '100%', padding: '7px 14px', border: 'none', background: 'none',
     cursor: 'pointer', textAlign: 'left', fontSize: 13, color: '#444',
-    transition: 'background 0.1s',
   },
   pageItemActive: { background: '#e8f0fe', color: '#1a73e8', fontWeight: 600 },
-  pageName: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  draftDot: { fontSize: 9, color: '#e07800', flexShrink: 0, marginLeft: 6 },
+  statusDot: {
+    width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+  },
+  pageName: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 },
+  fraction: { fontSize: 10, color: '#aaa', flexShrink: 0, fontVariantNumeric: 'tabular-nums' },
+  draftDot: { fontSize: 9, color: '#e07800', flexShrink: 0 },
   editorPane: {
     width: 500, flexShrink: 0, borderRight: '1px solid #e8e8e8',
-    overflowY: 'auto', background: '#fff',
+    overflowY: 'auto', background: '#fff', display: 'flex', flexDirection: 'column',
   },
   previewPane: { flex: 1, overflow: 'hidden', background: '#fafafa' },
   placeholder: {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     height: '100%', color: '#ccc', fontSize: 14,
+  },
+  staleBanner: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+    padding: '10px 16px', background: '#fff8e1', borderBottom: '1px solid #f0c040',
+    fontSize: 13, color: '#7a5c00', flexShrink: 0,
+  },
+  reloadBtn: {
+    padding: '4px 12px', borderRadius: 5, border: '1px solid #c09000',
+    background: '#fff3c0', color: '#7a5c00', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+  },
+  dismissBtn: {
+    padding: '4px 10px', borderRadius: 5, border: '1px solid #ddd',
+    background: '#fff', color: '#888', cursor: 'pointer', fontSize: 12,
   },
 };

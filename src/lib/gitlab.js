@@ -70,6 +70,23 @@ async function generatePageHtml(pageName, content) {
   return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
 }
 
+// Lightweight fetch — bypasses cache, just returns lastCommitId + content.
+export async function fetchPageMeta(token, pageName) {
+  const encoded = encodeURIComponent(jsonPath(pageName));
+  const url = `${BASE}/projects/${PROJECT_ID}/repository/files/${encoded}?ref=${encodeURIComponent(BRANCH)}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return { lastCommitId: data.last_commit_id, content: JSON.parse(atob(data.content)) };
+}
+
+export async function fetchCommitInfo(token, commitId) {
+  const url = `${BASE}/projects/${PROJECT_ID}/repository/commits/${commitId}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) return null;
+  return res.json();
+}
+
 export async function commitPage(token, pageName, content, lastCommitId, authorName, commitMessage) {
   // Detect concurrent edits: re-fetch the current commit ID and compare
   // with what was loaded when the user opened the page. If someone else
