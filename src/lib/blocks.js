@@ -10,6 +10,24 @@ export function newId() {
   return `b${Date.now().toString(36)}${counter}`;
 }
 
+export function slugify(text) {
+  const slug = (text || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return slug || 'section';
+}
+
+// Slugify `heading`, appending -2, -3, … until it doesn't collide with `existingIds`.
+export function uniqueSectionId(heading, existingIds) {
+  const base = slugify(heading);
+  if (!existingIds.includes(base)) return base;
+  let n = 2;
+  while (existingIds.includes(`${base}-${n}`)) n += 1;
+  return `${base}-${n}`;
+}
+
 export function esc(s) {
   return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

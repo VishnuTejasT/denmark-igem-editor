@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
-import { emptyBlock, SIZE_MAP, defaultTableMarkdown } from '../lib/blocks';
+import { emptyBlock, SIZE_MAP, defaultTableMarkdown, uniqueSectionId } from '../lib/blocks';
 
 const BLOCK_LABELS = {
   text: 'Text',
@@ -304,9 +304,35 @@ export default function Editor({ content, onChange }) {
     onChange({ ...content, sections });
   };
 
+  // New, uncommitted sections don't have a frozen anchor yet — resync the id
+  // to the heading once editing settles (on blur, not per keystroke, so the
+  // preview iframe doesn't spawn a fresh DOM section on every letter typed).
+  const resyncNewSectionId = (id) => {
+    const section = content.sections.find(s => s.id === id);
+    if (!section || !section.isNew) return;
+    const otherIds = content.sections.filter(o => o.id !== id).map(o => o.id);
+    const nextId = uniqueSectionId(section.heading, otherIds);
+    if (nextId === id) return;
+    const sections = content.sections.map(s => s.id === id ? { ...s, id: nextId } : s);
+    onChange({ ...content, sections });
+  };
+
   const updateBlocks = (id, blocks) => {
     const sections = content.sections.map(s => s.id === id ? { ...s, blocks } : s);
     onChange({ ...content, sections });
+  };
+
+  const addSection = () => {
+    const existingIds = content.sections.map(s => s.id);
+    const id = uniqueSectionId('New Section', existingIds);
+    onChange({
+      ...content,
+      sections: [...content.sections, { id, heading: 'New Section', blocks: [], isNew: true }],
+    });
+  };
+
+  const removeSection = (id) => {
+    onChange({ ...content, sections: content.sections.filter(s => s.id !== id) });
   };
 
   return (
@@ -336,16 +362,25 @@ export default function Editor({ content, onChange }) {
         <div style={styles.emptyMsg}>No sections found. Select a page to begin editing.</div>
       )}
 
-      {content.sections.map(section => (
-        <div key={section.id} style={styles.sectionCard}>
+      {content.sections.map((section, i) => (
+        // Keyed by position, not id: a newly-added section's id is re-slugified
+        // on every keystroke (see updateHeading), which would otherwise remount
+        // the card — and its inputs — mid-edit.
+        <div key={i} style={styles.sectionCard}>
           <div style={styles.sectionHeader}>
             <input
               style={styles.sectionHeadingInput}
               value={section.heading}
               onChange={e => updateHeading(section.id, e.target.value)}
+              onBlur={() => resyncNewSectionId(section.id)}
               placeholder="Section name"
             />
             <span style={styles.sectionId}>#{section.id}</span>
+            {section.isNew && (
+              <button style={styles.removeBtn} onClick={() => removeSection(section.id)}>
+                ✕ Remove section
+              </button>
+            )}
           </div>
 
           <BlockList
@@ -356,11 +391,14 @@ export default function Editor({ content, onChange }) {
         </div>
       ))}
 
+      <button style={styles.addSectionBtn} onClick={addSection}>+ Add Section</button>
+
       {content.sections.length > 0 && (
         <p style={styles.hint}>
           Each section is a stack of blocks — text, images, tables, collapsible lists, and
           subsections. Subsections are their own mini cards that can hold the same block types.
-          The preview on the right shows how it will look on the wiki.
+          The preview on the right shows how it will look on the wiki. New sections appear on the
+          real wiki page once you commit.
         </p>
       )}
     </div>
@@ -433,6 +471,11 @@ const styles = {
     marginBottom: 8, fontFamily: 'inherit', background: 'transparent', boxSizing: 'border-box',
   },
 
+  addSectionBtn: {
+    display: 'block', width: '100%', padding: '10px 0', marginTop: 4,
+    borderRadius: 8, border: '1px dashed #c8d8fb', background: '#f5f8ff',
+    color: '#1a73e8', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+  },
   emptyMsg: { color: '#ccc', textAlign: 'center', padding: '48px 0', fontSize: 14 },
   hint: { fontSize: 11, color: '#ccc', textAlign: 'center', marginTop: 16 },
 };

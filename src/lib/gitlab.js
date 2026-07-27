@@ -46,6 +46,40 @@ export async function fetchPage(token, pageName) {
   return result;
 }
 
+// Append a brand-new `.toc-section` (and its matching TOC nav link) to a wiki
+// page's HTML — used when a section was added in the editor but doesn't exist
+// in the page template yet. Returns the new section element, or null if the
+// page's content container isn't present.
+function createSectionElement(doc, s) {
+  const container = doc.querySelector('.page-content .container');
+  if (!container) return null;
+
+  const sec = doc.createElement('section');
+  sec.className = 'wiki-section toc-section';
+  sec.id = s.id;
+
+  const h3 = doc.createElement('h3');
+  h3.textContent = s.heading || '';
+  sec.appendChild(h3);
+
+  const block = doc.createElement('div');
+  block.className = 'section-block';
+  sec.appendChild(block);
+
+  container.appendChild(sec);
+
+  const tocNav = doc.querySelector('.toc-nav');
+  if (tocNav) {
+    const link = doc.createElement('a');
+    link.setAttribute('href', `#${s.id}`);
+    link.setAttribute('data-toc', s.id);
+    link.textContent = s.heading || '';
+    tocNav.appendChild(link);
+  }
+
+  return sec;
+}
+
 // Apply content to the cached HTML template and return the updated HTML string.
 async function generatePageHtml(pageName, content) {
   const res = await fetch(`/wiki-cache/wiki/pages/${pageName}.html`);
@@ -66,9 +100,11 @@ async function generatePageHtml(pageName, content) {
     if (p) p.textContent = content.intro;
   }
   for (const s of content.sections || []) {
-    const sec = doc.querySelector(`.toc-section#${s.id}`);
-    if (!sec) continue;
-    if (s.heading) {
+    let sec = doc.querySelector(`.toc-section#${s.id}`);
+    if (!sec) {
+      sec = createSectionElement(doc, s);
+      if (!sec) continue;
+    } else if (s.heading) {
       const h3 = sec.querySelector('h3');
       if (h3) h3.textContent = s.heading;
       const tocLink = doc.querySelector(`.toc-nav a[data-toc="${s.id}"]`);

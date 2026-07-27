@@ -39,15 +39,62 @@ function buildHtml(rawHtml, css, content) {
   const injectedScript = `<script>
 (function() {
   var content = ${contentJson};
+  function pruneOrphanedInjectedSections(c) {
+    // Sections we injected dynamically (see createSection) whose id no longer
+    // matches anything in the current draft are stale — e.g. the user renamed
+    // a brand-new section, which re-slugs its id and would otherwise leave the
+    // previous DOM node behind instead of replacing it.
+    var liveIds = (c.sections || []).map(function(s) { return s.id; });
+    document.querySelectorAll('.toc-section[data-injected]').forEach(function(sec) {
+      if (liveIds.indexOf(sec.id) === -1) {
+        var tocLink = document.querySelector('.toc-nav a[data-toc="' + sec.id + '"]');
+        if (tocLink) tocLink.remove();
+        sec.remove();
+      }
+    });
+  }
+  function createSection(s) {
+    var container = document.querySelector('.page-content .container');
+    if (!container) return null;
+
+    var sec = document.createElement('section');
+    sec.className = 'wiki-section toc-section';
+    sec.id = s.id;
+    sec.setAttribute('data-injected', 'true');
+
+    var h3 = document.createElement('h3');
+    h3.textContent = s.heading || '';
+    sec.appendChild(h3);
+
+    var block = document.createElement('div');
+    block.className = 'section-block';
+    sec.appendChild(block);
+
+    container.appendChild(sec);
+
+    var tocNav = document.querySelector('.toc-nav');
+    if (tocNav) {
+      var link = document.createElement('a');
+      link.setAttribute('href', '#' + s.id);
+      link.setAttribute('data-toc', s.id);
+      link.textContent = s.heading || '';
+      tocNav.appendChild(link);
+    }
+
+    return sec;
+  }
   function applyContent(c) {
     var h2 = document.querySelector('.page-hero h2');
     if (h2 && c.title) h2.textContent = c.title;
     var summary = document.querySelector('.page-hero .summary');
     if (summary && c.intro) summary.textContent = c.intro;
+    pruneOrphanedInjectedSections(c);
     (c.sections || []).forEach(function(s) {
       var sec = document.querySelector('.toc-section#' + s.id);
-      if (!sec) return;
-      if (s.heading) {
+      if (!sec) {
+        sec = createSection(s);
+        if (!sec) return;
+      } else if (s.heading) {
         var h3 = sec.querySelector('h3');
         if (h3) h3.textContent = s.heading;
         var tocLink = document.querySelector('.toc-nav a[data-toc="' + s.id + '"]');

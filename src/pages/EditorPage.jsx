@@ -214,6 +214,12 @@ export default function EditorPage() {
       const message = commitMessage.trim() || `Update ${selectedPage} content`;
       await commitPage(token, selectedPage, content, lastCommitId, username, message);
       sessionStorage.removeItem(`wiki_draft_${selectedPage}`);
+      // Sections just committed now really exist in the wiki HTML with a frozen
+      // id — stop treating them as "new" so further heading edits don't reslug them.
+      setContent(prev => ({
+        ...prev,
+        sections: prev.sections.map(s => s.isNew ? { ...s, isNew: false } : s),
+      }));
       setStaleWarning(null);
       forceUpdate(n => n + 1);
       setStatus({ type: 'success', message: '✓ Committed successfully.' });
