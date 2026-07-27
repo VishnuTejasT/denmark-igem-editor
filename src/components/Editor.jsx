@@ -279,7 +279,7 @@ function BlockList({ blocks, onChange, depth }) {
         )}
         <button
           style={styles.snippetBtn}
-          onClick={() => addTextSnippet('> **[N]** Author(s). Title. *Journal* Year;Vol:Pages.')}
+          onClick={() => addTextSnippet('**[N]** Author(s). Title. *Journal* Year;Vol:Pages.')}
         >
           + Reference
         </button>
@@ -304,12 +304,15 @@ export default function Editor({ content, onChange }) {
     onChange({ ...content, sections });
   };
 
-  // New, uncommitted sections don't have a frozen anchor yet — resync the id
-  // to the heading once editing settles (on blur, not per keystroke, so the
-  // preview iframe doesn't spawn a fresh DOM section on every letter typed).
-  const resyncNewSectionId = (id) => {
+  // Keep the section id in sync with its heading, for every section — not
+  // just brand-new ones. Resync on blur, not per keystroke, so the preview
+  // iframe doesn't spawn a fresh DOM section on every letter typed.
+  // `sourceId` (set when the section was first loaded) always keeps pointing
+  // at the original HTML anchor so we can still find and rename that element
+  // on commit, even after `id` has drifted away from it.
+  const resyncSectionId = (id) => {
     const section = content.sections.find(s => s.id === id);
-    if (!section || !section.isNew) return;
+    if (!section) return;
     const otherIds = content.sections.filter(o => o.id !== id).map(o => o.id);
     const nextId = uniqueSectionId(section.heading, otherIds);
     if (nextId === id) return;
@@ -327,12 +330,21 @@ export default function Editor({ content, onChange }) {
     const id = uniqueSectionId('New Section', existingIds);
     onChange({
       ...content,
-      sections: [...content.sections, { id, heading: 'New Section', blocks: [], isNew: true }],
+      sections: [...content.sections, { id, heading: 'New Section', blocks: [], isNew: true, sourceId: null }],
     });
   };
 
   const removeSection = (id) => {
     onChange({ ...content, sections: content.sections.filter(s => s.id !== id) });
+  };
+
+  const moveSection = (id, dir) => {
+    const i = content.sections.findIndex(s => s.id === id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= content.sections.length) return;
+    const sections = [...content.sections];
+    [sections[i], sections[j]] = [sections[j], sections[i]];
+    onChange({ ...content, sections });
   };
 
   return (
@@ -372,10 +384,22 @@ export default function Editor({ content, onChange }) {
               style={styles.sectionHeadingInput}
               value={section.heading}
               onChange={e => updateHeading(section.id, e.target.value)}
-              onBlur={() => resyncNewSectionId(section.id)}
+              onBlur={() => resyncSectionId(section.id)}
               placeholder="Section name"
             />
             <span style={styles.sectionId}>#{section.id}</span>
+            <button
+              style={styles.iconBtn}
+              disabled={i === 0}
+              onClick={() => moveSection(section.id, -1)}
+              title="Move section up"
+            >↑</button>
+            <button
+              style={styles.iconBtn}
+              disabled={i === content.sections.length - 1}
+              onClick={() => moveSection(section.id, 1)}
+              title="Move section down"
+            >↓</button>
             {section.isNew && (
               <button style={styles.removeBtn} onClick={() => removeSection(section.id)}>
                 ✕ Remove section

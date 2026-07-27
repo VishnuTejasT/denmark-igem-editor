@@ -1,4 +1,4 @@
-import { sectionBodyHtml } from './blocks';
+import { sectionBodyHtml, sectionBodyListItems } from './blocks';
 
 const GITLAB_HOST = (import.meta.env.VITE_GITLAB_HOST || 'gitlab.igem.org').replace(/^https?:\/\//, '');
 const BASE = `https://${GITLAB_HOST}/api/v4`;
@@ -100,21 +100,54 @@ async function generatePageHtml(pageName, content) {
     if (p) p.textContent = content.intro;
   }
   for (const s of content.sections || []) {
-    let sec = doc.querySelector(`.toc-section#${s.id}`);
+    // Look the element up by its original anchor (sourceId), since `id` may
+    // have already drifted away from it to match a renamed heading.
+    const lookupId = s.sourceId || s.id;
+    let sec = doc.querySelector(`.toc-section#${lookupId}`);
     if (!sec) {
       sec = createSectionElement(doc, s);
       if (!sec) continue;
-    } else if (s.heading) {
-      const h3 = sec.querySelector('h3');
-      if (h3) h3.textContent = s.heading;
-      const tocLink = doc.querySelector(`.toc-nav a[data-toc="${s.id}"]`);
-      if (tocLink) tocLink.textContent = s.heading;
+    } else {
+      if (sec.id !== s.id) sec.id = s.id;
+      if (s.heading) {
+        const h3 = sec.querySelector('h3');
+        if (h3) h3.textContent = s.heading;
+      }
+      const tocLink = doc.querySelector(`.toc-nav a[data-toc="${lookupId}"]`);
+      if (tocLink) {
+        if (s.heading) tocLink.textContent = s.heading;
+        if (tocLink.getAttribute('data-toc') !== s.id) {
+          tocLink.setAttribute('data-toc', s.id);
+          tocLink.setAttribute('href', `#${s.id}`);
+        }
+      }
     }
-    const renderedBody = sectionBodyHtml(s.blocks);
-    if (renderedBody) {
-      const block = sec.querySelector('.section-block');
-      if (block) block.innerHTML = renderedBody;
+    // The References section is an <ol class="references-list"> whose
+    // numbered-circle styling comes from a CSS counter on each <li> — so
+    // every reference needs its own <li>, not one merged blob.
+    const refsList = sec.querySelector('.references-list');
+    if (refsList) {
+      const items = sectionBodyListItems(s.blocks);
+      if (items) refsList.innerHTML = items;
+    } else {
+      const renderedBody = sectionBodyHtml(s.blocks);
+      if (renderedBody) {
+        const block = sec.querySelector('.section-block');
+        if (block) block.innerHTML = renderedBody;
+      }
     }
+  }
+
+  // Reorder the actual DOM nodes (and their TOC links) to match the editor's
+  // section order — appendChild on an existing node moves it, so iterating
+  // in the desired order lays them out correctly.
+  const container = doc.querySelector('.page-content .container');
+  const tocNav = doc.querySelector('.toc-nav');
+  for (const s of content.sections || []) {
+    const sec = doc.querySelector(`.toc-section#${s.id}`);
+    if (sec && container) container.appendChild(sec);
+    const tocLink = doc.querySelector(`.toc-nav a[data-toc="${s.id}"]`);
+    if (tocLink && tocNav) tocNav.appendChild(tocLink);
   }
 
   return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;

@@ -128,6 +128,16 @@ export function sectionBodyHtml(blocks) {
   return (blocks || []).map(blockToHtml).filter(Boolean).join('\n');
 }
 
+// Per-block rendered HTML, used for containers (like the References <ol>)
+// that need one list item per block instead of one merged blob.
+export function sectionBodyBlocksHtml(blocks) {
+  return (blocks || []).map(blockToHtml).filter(Boolean);
+}
+
+export function sectionBodyListItems(blocks) {
+  return sectionBodyBlocksHtml(blocks).map(html => `<li class="section-block">${html}</li>`).join('\n');
+}
+
 function blockHasContent(b) {
   switch (b.type) {
     case 'text':

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { sectionBodyHtml } from '../lib/blocks';
+import { sectionBodyBlocksHtml } from '../lib/blocks';
 
 const STATIC_RAW_BASE =
   `https://gitlab.igem.org/${import.meta.env.VITE_GITLAB_REPO_PATH || 'vishnutejast/denmarkwiki'}/-/raw/${import.meta.env.VITE_GITLAB_BRANCH || 'main'}/`;
@@ -15,10 +15,14 @@ async function fetchRaw(path) {
 function renderContent(content) {
   return {
     ...content,
-    sections: (content.sections || []).map(s => ({
-      ...s,
-      body: sectionBodyHtml(s.blocks),
-    })),
+    sections: (content.sections || []).map(s => {
+      const items = sectionBodyBlocksHtml(s.blocks);
+      return {
+        ...s,
+        body: items.join('\n'),
+        items,
+      };
+    }),
   };
 }
 
@@ -90,21 +94,49 @@ function buildHtml(rawHtml, css, content) {
     if (summary && c.intro) summary.textContent = c.intro;
     pruneOrphanedInjectedSections(c);
     (c.sections || []).forEach(function(s) {
-      var sec = document.querySelector('.toc-section#' + s.id);
+      // Look the element up by its original anchor (sourceId), since id
+      // may have already drifted away from it to match a renamed heading.
+      var lookupId = s.sourceId || s.id;
+      var sec = document.querySelector('.toc-section#' + lookupId);
       if (!sec) {
         sec = createSection(s);
         if (!sec) return;
-      } else if (s.heading) {
-        var h3 = sec.querySelector('h3');
-        if (h3) h3.textContent = s.heading;
-        var tocLink = document.querySelector('.toc-nav a[data-toc="' + s.id + '"]');
-        if (tocLink) tocLink.textContent = s.heading;
+      } else {
+        if (sec.id !== s.id) sec.id = s.id;
+        if (s.heading) {
+          var h3 = sec.querySelector('h3');
+          if (h3) h3.textContent = s.heading;
+        }
+        var tocLink = document.querySelector('.toc-nav a[data-toc="' + lookupId + '"]');
+        if (tocLink) {
+          if (s.heading) tocLink.textContent = s.heading;
+          if (tocLink.getAttribute('data-toc') !== s.id) {
+            tocLink.setAttribute('data-toc', s.id);
+            tocLink.setAttribute('href', '#' + s.id);
+          }
+        }
       }
-      var body = s.body || '';
-      if (body) {
-        var block = sec.querySelector('.section-block');
-        if (block) block.innerHTML = body;
+      var refsList = sec.querySelector('.references-list');
+      if (refsList) {
+        var items = s.items || [];
+        if (items.length) {
+          refsList.innerHTML = items.map(function(h) { return '<li class="section-block">' + h + '</li>'; }).join('\\n');
+        }
+      } else {
+        var body = s.body || '';
+        if (body) {
+          var block = sec.querySelector('.section-block');
+          if (block) block.innerHTML = body;
+        }
       }
+    });
+    var container = document.querySelector('.page-content .container');
+    var tocNav = document.querySelector('.toc-nav');
+    (c.sections || []).forEach(function(s) {
+      var sec = document.querySelector('.toc-section#' + s.id);
+      if (sec && container) container.appendChild(sec);
+      var tocLink = document.querySelector('.toc-nav a[data-toc="' + s.id + '"]');
+      if (tocLink && tocNav) tocNav.appendChild(tocLink);
     });
   }
   if (document.readyState === 'loading') {

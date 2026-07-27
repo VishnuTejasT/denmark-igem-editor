@@ -35,17 +35,34 @@ const STATUS_COLOR = {
 function normalizeContent(content, htmlSections) {
   const savedBlocks = {};
   const savedHeadings = {};
+  const savedSourceId = {};
   (content.sections || []).forEach(s => {
     savedBlocks[s.id] = migrateSection(s);
     if (s.heading) savedHeadings[s.id] = s.heading;
+    // sourceId is the anchor id actually present in the HTML template — kept
+    // stable even as the user renames the section (and its displayed `id`
+    // drifts to match), so commit/preview can still find the right element.
+    savedSourceId[s.id] = s.sourceId || s.id;
   });
+  const htmlHeadingById = {};
+  htmlSections.forEach(({ id, heading }) => { htmlHeadingById[id] = heading; });
+
+  // Saved JSON order is the source of truth (it's what the user arranged via
+  // "move section"). Any section present in the HTML template but not yet in
+  // the saved JSON (e.g. added to the page template since the last commit)
+  // gets appended at the end.
+  const savedIds = (content.sections || []).map(s => s.id);
+  const extraHtmlIds = htmlSections.map(s => s.id).filter(id => !savedIds.includes(id));
+  const orderedIds = [...savedIds, ...extraHtmlIds];
+
   return {
     title: content.title || '',
     intro: content.intro || '',
-    sections: htmlSections.map(({ id, heading }) => ({
+    sections: orderedIds.map(id => ({
       id,
-      heading: savedHeadings[id] || heading,
+      heading: savedHeadings[id] || htmlHeadingById[id] || id,
       blocks: savedBlocks[id] || [],
+      sourceId: savedSourceId[id] || id,
     })),
   };
 }
@@ -184,7 +201,7 @@ export default function EditorPage() {
           // NOT_FOUND just means no content saved yet — don't show as an error
           setStatus({ type: 'error', message: err.message });
         }
-        setContent({ title: '', intro: '', sections: sections.map(s => ({ ...s, blocks: [] })) });
+        setContent({ title: '', intro: '', sections: sections.map(s => ({ ...s, blocks: [], sourceId: s.id })) });
       } else {
         const { content: fetched, lastCommitId: cid } = jsonResult.value;
         const draft = sessionStorage.getItem(`wiki_draft_${pageName}`);
