@@ -287,6 +287,40 @@ function CollapsibleListInsertForm({ onInsert, onClose }) {
   );
 }
 
+// ─── Subsection insert form ──────────────────────────────────────────────────
+
+function SubsectionInsertForm({ onInsert, onClose }) {
+  const [heading, setHeading] = useState('');
+
+  const handleInsert = () => {
+    if (!heading.trim()) return;
+    onInsert(`\n#### ${heading.trim()}\n\n`);
+    onClose();
+  };
+
+  return (
+    <div style={formStyles.panel}>
+      <div style={formStyles.panelTitle}>Insert Subsection</div>
+      <div style={formStyles.row}>
+        <input
+          style={{ ...formStyles.input, flex: 1 }}
+          placeholder="Subsection heading (e.g. Materials)"
+          value={heading}
+          onChange={e => setHeading(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleInsert()}
+        />
+        <button style={formStyles.insertBtn} onClick={handleInsert} disabled={!heading.trim()}>
+          Insert
+        </button>
+        <button style={formStyles.cancelBtn} onClick={onClose}>Cancel</button>
+      </div>
+      <div style={formStyles.tableHint}>
+        Adds a smaller header inside this section, letting you break it into mini sections.
+      </div>
+    </div>
+  );
+}
+
 // ─── Main editor component ───────────────────────────────────────────────────
 
 export default function Editor({ content, onChange }) {
@@ -386,6 +420,12 @@ export default function Editor({ content, onChange }) {
               Collapsible List
             </button>
             <button
+              style={{ ...styles.snippetBtn, ...(activePanels[section.id] === 'subsection' ? styles.snippetBtnActive : {}) }}
+              onClick={() => togglePanel(section.id, 'subsection')}
+            >
+              Subsection
+            </button>
+            <button
               style={styles.snippetBtn}
               onClick={() => appendToBody(section.id, '\n> **[N]** Author(s). Title. *Journal* Year;Vol:Pages.\n')}
             >
@@ -420,6 +460,12 @@ export default function Editor({ content, onChange }) {
           )}
           {activePanels[section.id] === 'collapsible' && (
             <CollapsibleListInsertForm
+              onInsert={snippet => appendToBody(section.id, snippet)}
+              onClose={() => closePanel(section.id)}
+            />
+          )}
+          {activePanels[section.id] === 'subsection' && (
+            <SubsectionInsertForm
               onInsert={snippet => appendToBody(section.id, snippet)}
               onClose={() => closePanel(section.id)}
             />
