@@ -1,6 +1,4 @@
-import { marked } from 'marked';
-
-marked.use({ gfm: true, breaks: true });
+import { sectionBodyHtml } from './blocks';
 
 const GITLAB_HOST = (import.meta.env.VITE_GITLAB_HOST || 'gitlab.igem.org').replace(/^https?:\/\//, '');
 const BASE = `https://${GITLAB_HOST}/api/v4`;
@@ -76,7 +74,7 @@ async function generatePageHtml(pageName, content) {
       const tocLink = doc.querySelector(`.toc-nav a[data-toc="${s.id}"]`);
       if (tocLink) tocLink.textContent = s.heading;
     }
-    const renderedBody = s.body ? marked(s.body) : '';
+    const renderedBody = sectionBodyHtml(s.blocks);
     if (renderedBody) {
       const block = sec.querySelector('.section-block');
       if (block) block.innerHTML = renderedBody;

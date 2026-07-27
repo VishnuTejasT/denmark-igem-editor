@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchPage, commitPage, fetchPageMeta, fetchCommitInfo } from '../lib/gitlab';
 import { parseSectionsFromHtml } from '../lib/htmlParser';
+import { migrateSection, sectionIsFilled } from '../lib/blocks';
 import Editor from '../components/Editor';
 import Preview from '../components/Preview';
 
@@ -12,10 +13,7 @@ const EMPTY = { title: '', intro: '', sections: [] };
 function computePageStatus(content) {
   if (!content) return { status: 'unknown', filled: 0, total: 0 };
   const sections = content.sections || [];
-  const filled = sections.filter(s => {
-    const body = s.body ?? (s.blocks?.[0]?.body ?? '');
-    return body.trim() && body.trim() !== '--';
-  }).length;
+  const filled = sections.filter(s => sectionIsFilled(s)).length;
   const total = sections.length;
   const hasTitle = !!(content.title?.trim() && content.title !== '--');
 
@@ -35,10 +33,10 @@ const STATUS_COLOR = {
 };
 
 function normalizeContent(content, htmlSections) {
-  const savedBodies = {};
+  const savedBlocks = {};
   const savedHeadings = {};
   (content.sections || []).forEach(s => {
-    savedBodies[s.id] = s.body ?? (s.blocks?.[0]?.body ?? '');
+    savedBlocks[s.id] = migrateSection(s);
     if (s.heading) savedHeadings[s.id] = s.heading;
   });
   return {
@@ -47,7 +45,7 @@ function normalizeContent(content, htmlSections) {
     sections: htmlSections.map(({ id, heading }) => ({
       id,
       heading: savedHeadings[id] || heading,
-      body: savedBodies[id] || '',
+      blocks: savedBlocks[id] || [],
     })),
   };
 }
@@ -186,7 +184,7 @@ export default function EditorPage() {
           // NOT_FOUND just means no content saved yet — don't show as an error
           setStatus({ type: 'error', message: err.message });
         }
-        setContent({ title: '', intro: '', sections: sections.map(s => ({ ...s, body: '' })) });
+        setContent({ title: '', intro: '', sections: sections.map(s => ({ ...s, blocks: [] })) });
       } else {
         const { content: fetched, lastCommitId: cid } = jsonResult.value;
         const draft = sessionStorage.getItem(`wiki_draft_${pageName}`);

@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { marked } from 'marked';
-
-marked.use({ gfm: true, breaks: true });
+import { sectionBodyHtml } from '../lib/blocks';
 
 const STATIC_RAW_BASE =
   `https://gitlab.igem.org/${import.meta.env.VITE_GITLAB_REPO_PATH || 'vishnutejast/denmarkwiki'}/-/raw/${import.meta.env.VITE_GITLAB_BRANCH || 'main'}/`;
@@ -19,7 +17,7 @@ function renderContent(content) {
     ...content,
     sections: (content.sections || []).map(s => ({
       ...s,
-      body: s.body ? marked(s.body) : '',
+      body: sectionBodyHtml(s.blocks),
     })),
   };
 }
@@ -55,7 +53,7 @@ function buildHtml(rawHtml, css, content) {
         var tocLink = document.querySelector('.toc-nav a[data-toc="' + s.id + '"]');
         if (tocLink) tocLink.textContent = s.heading;
       }
-      var body = s.body || ((s.blocks || [])[0] || {}).body || '';
+      var body = s.body || '';
       if (body) {
         var block = sec.querySelector('.section-block');
         if (block) block.innerHTML = body;
