@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchPage, commitPage, fetchPageMeta, fetchCommitInfo } from '../lib/gitlab';
 import { parseSectionsFromHtml } from '../lib/htmlParser';
-import { migrateSection, sectionIsFilled } from '../lib/blocks';
+import { migrateSection, sectionIsFilled, uniqueSectionId } from '../lib/blocks';
 import Editor from '../components/Editor';
 import Preview from '../components/Preview';
 
@@ -55,15 +55,32 @@ function normalizeContent(content, htmlSections) {
   const extraHtmlIds = htmlSections.map(s => s.id).filter(id => !savedIds.includes(id));
   const orderedIds = [...savedIds, ...extraHtmlIds];
 
+  const sections = orderedIds.map(id => ({
+    id,
+    heading: savedHeadings[id] || htmlHeadingById[id] || id,
+    blocks: savedBlocks[id] || [],
+    sourceId: savedSourceId[id] || id,
+  }));
+
+  // Self-heal id collisions: a section's `id` must not equal another
+  // section's `sourceId` (its real HTML anchor), or the preview/commit DOM
+  // lookup — which matches on sourceId first — hijacks that other
+  // section's element instead of this one's. This can happen with data
+  // saved before ids were reserved against sourceIds too.
+  const sourceIdOwner = {};
+  sections.forEach(s => { if (s.sourceId) sourceIdOwner[s.sourceId] = s; });
+  sections.forEach(s => {
+    const owner = sourceIdOwner[s.id];
+    if (owner && owner !== s) {
+      const reserved = sections.filter(o => o !== s).flatMap(o => [o.id, o.sourceId].filter(Boolean));
+      s.id = uniqueSectionId(s.heading, reserved);
+    }
+  });
+
   return {
     title: content.title || '',
     intro: content.intro || '',
-    sections: orderedIds.map(id => ({
-      id,
-      heading: savedHeadings[id] || htmlHeadingById[id] || id,
-      blocks: savedBlocks[id] || [],
-      sourceId: savedSourceId[id] || id,
-    })),
+    sections,
   };
 }
 

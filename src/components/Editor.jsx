@@ -310,11 +310,19 @@ export default function Editor({ content, onChange }) {
   // `sourceId` (set when the section was first loaded) always keeps pointing
   // at the original HTML anchor so we can still find and rename that element
   // on commit, even after `id` has drifted away from it.
+  // Ids must stay unique against every other section's *id* AND its
+  // *sourceId* — otherwise a new/renamed section can be assigned an id that
+  // another section already uses as its real HTML anchor, and the preview's
+  // DOM lookup (which matches on sourceId first) hijacks that other
+  // section's element instead of creating its own.
+  const reservedIds = (excludeId) => content.sections
+    .filter(o => o.id !== excludeId)
+    .flatMap(o => [o.id, o.sourceId].filter(Boolean));
+
   const resyncSectionId = (id) => {
     const section = content.sections.find(s => s.id === id);
     if (!section) return;
-    const otherIds = content.sections.filter(o => o.id !== id).map(o => o.id);
-    const nextId = uniqueSectionId(section.heading, otherIds);
+    const nextId = uniqueSectionId(section.heading, reservedIds(id));
     if (nextId === id) return;
     const sections = content.sections.map(s => s.id === id ? { ...s, id: nextId } : s);
     onChange({ ...content, sections });
@@ -326,7 +334,7 @@ export default function Editor({ content, onChange }) {
   };
 
   const addSection = () => {
-    const existingIds = content.sections.map(s => s.id);
+    const existingIds = reservedIds(null);
     const id = uniqueSectionId('New Section', existingIds);
     onChange({
       ...content,
@@ -388,7 +396,7 @@ export default function Editor({ content, onChange }) {
               placeholder="Section name"
             />
             <span style={styles.sectionId}>
-              #{uniqueSectionId(section.heading, content.sections.filter(o => o.id !== section.id).map(o => o.id))}
+              #{uniqueSectionId(section.heading, reservedIds(section.id))}
             </span>
             <button
               style={styles.iconBtn}
