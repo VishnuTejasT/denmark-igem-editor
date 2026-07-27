@@ -292,9 +292,12 @@ function CollapsibleListInsertForm({ onInsert, onClose }) {
 function SubsectionInsertForm({ onInsert, onClose }) {
   const [heading, setHeading] = useState('');
 
+  const esc = (s) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
   const handleInsert = () => {
     if (!heading.trim()) return;
-    onInsert(`\n#### ${heading.trim()}\n\n`);
+    const snippet = `\n<div class="section-block" style="margin-top:26px">\n  <span class="section-block-label">${esc(heading.trim())}</span>\n\n  Write this sub-section's content here.\n</div>\n`;
+    onInsert(snippet);
     onClose();
   };
 
@@ -315,7 +318,9 @@ function SubsectionInsertForm({ onInsert, onClose }) {
         <button style={formStyles.cancelBtn} onClick={onClose}>Cancel</button>
       </div>
       <div style={formStyles.tableHint}>
-        Adds a smaller header inside this section, letting you break it into mini sections.
+        Adds another rounded "blob" card with a pill label inside this section — the same
+        style as the section's own content block — so one big section can hold several
+        labeled mini sections stacked on top of each other.
       </div>
     </div>
   );

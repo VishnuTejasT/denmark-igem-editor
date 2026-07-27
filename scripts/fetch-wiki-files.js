@@ -18,7 +18,7 @@ if (!TOKEN) {
   console.warn('Warning: GITLAB_TOKEN not set — unauthenticated API calls may still be rate limited');
 }
 
-const STATIC_FILES = ['static/style.css', 'static/denmark.css'];
+const STATIC_FILES = ['static/style.css', 'static/denmark.css', 'static/section-blocks.css'];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 

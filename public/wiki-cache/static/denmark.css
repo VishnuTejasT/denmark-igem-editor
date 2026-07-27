@@ -6,57 +6,129 @@
   src: url('https://static.igem.wiki/teams/6112/wiki/betterfonts/fredoka-regular.ttf') format('truetype');
 }
 
+@font-face {
+  font-family: 'Varela Round';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('https://static.igem.wiki/teams/6112/wiki/betterfonts/varelaround-regular.ttf') format('truetype');
+}
+
 
 /* Denmark-GA branding */
 
 
 :root {
-  /* Primary colors */
-  --brand-dark:   #880909;
-  --brand-deep:   #9d0404;
-  --brand:        #c01919;
-  --brand-bright: #db2828;
-  --brand-soft:   #de3e3e;
+  --brand-dark:   #0c1f3d;   /* deep navy */
+  --brand-deep:   #14315e;
+  --brand:        #2f6fb0;   /* mid navy-blue, for buttons/links */
+  --brand-bright: #5da3d9;   /* Carolina blue — primary accent */
+  --brand-soft:   #a3cbe8;   /* light Carolina blue, for hovers/tags */
 
-  /* backgrounds */
-  --bg-1:   #f2eee7;
-  --bg-2:   #f1efea;
-  --beige:  #c9b197;
-  --muted:  #8b867c;
-  --muted-2: #808080;
-  --text:   #1a1412;
-  --white:  #ffffff;
+  --bio-red:      #c01919;   /* legacy — malaria/bio callouts only */
+
+  --bg-1:    #f7f9fb;
+  --bg-2:    #eef3f8;
+  --beige:   #d7e3ee;
+  --muted:   #5c6b7d;
+  --muted-2: #8c9aac;
+  --text:    #0c1f3d;
+  --white:   #ffffff;
+
+  /* Theme-aware roles: --ink covers borders/shadows/heading text that need
+     to flip from dark-on-light to light-on-dark; --surface covers card
+     backgrounds that currently ride on --white. Both equal their light-mode
+     twins by default so nothing changes unless [data-theme="dark"] is set. */
+  --ink:     var(--brand-dark);
+  --surface: var(--white);
 
   /* Alias */
   --accent: var(--brand);
+  --font-heading: 'Fredoka One', cursive;
+  --font-body:    "Segoe One", system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  --font-ui:      'Varela Round', system-ui, sans-serif;
+  --font-mono:    'Space Mono', 'Courier New', monospace;
 }
 
-/* Font stacks — based on brand guide */
-body { font-family: 'Crimson Pro', Palatino, 'Palatino Linotype', serif; color: var(--text); }
-h1 { font-family: 'Playfair Display', Georgia, serif; }
-h2 { font-family: 'Noto Serif', Georgia, serif; }
-h3, h4, h5 { font-family: 'Raleway', system-ui, sans-serif; }
-code, pre, kbd, samp { font-family: 'Space Mono', 'Courier New', monospace; }
+
+
+/* ==========================================
+   Typography
+   ========================================== */
+
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Fredoka One — all headers, one weight (400), differentiated by spacing & transform */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 400;
+}
+
+h1 { letter-spacing: 0.06em; }
+h2 { letter-spacing: 0.03em; }
+h3 { letter-spacing: 0.01em; }
+h4 { letter-spacing: -0.01em; text-transform: uppercase; }
+
+/* Varela Round — navigation links and TOC */
+.nav-link,
+.dropdown a,
+.toc-nav a,
+.toc-nav-heading {
+  font-family: var(--font-ui);
+}
+
+code, pre, kbd, samp {
+  font-family: var(--font-mono);
+}
 
 /* Brand color applications */
-.topnav    { background: var(--white); }
-.brand     { color: var(--brand-dark); }
+.topnav    { background: var(--surface); }
+.brand     { color: var(--ink); }
 .home-hero { background: var(--bg-1); }
 .page-hero { background: var(--bg-1); }
 
 .page-hero-index { background-image: url('https://static.igem.wiki/teams/6112/wiki/indexphoto.avif'); background-size: 100% auto; background-position: center top; background-repeat: no-repeat; aspect-ratio: 8362 / 5417; min-height: unset; position: relative; }
-.page-hero-index::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 5%; background: linear-gradient(to bottom, transparent, #f2eee7); pointer-events: none; }
-.page-hero-index .teamName { position: absolute; top: -5%; left: 20%; width: 50%; margin: 0; background: rgba(242, 238, 231, 0); padding: 6px 10px; border-radius: 25px; }
+.page-hero-index::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: .5%; background: linear-gradient(to bottom, transparent, var(--bg-1)); pointer-events: none; }
+.page-hero-index .teamName { position: absolute; top: -5%; left: 20%; width: 50%; margin: 0; background: rgba(247, 249, 251, 0); padding: 6px 10px; border-radius: 25px; }
 
-.page-hero-team { background-image: url('https://static.igem.wiki/teams/6112/wiki/teampicture.avif'); background-size: cover; background-position: center; background-repeat: no-repeat; min-height: 575px; display: flex; align-items: flex-end; }
-.page-hero-team .container { background: rgba(0, 0, 0, 0.45); padding: 20px 28px; border-radius: 6px; margin-bottom: 16px; text-align: center; }
-.page-hero-team h2 { color: #fff; }
+.page-hero-team { background-image: url('https://static.igem.wiki/teams/6112/wiki/teampicture.avif'); background-size: cover; background-position: center; background-repeat: no-repeat; min-height: 575px; display: flex; align-items: flex-end; position: relative; overflow: hidden; }
+.page-hero-team .container { background: rgba(12, 31, 61, 0.45); padding: 20px 28px; border-radius: 6px; margin-bottom: 16px; text-align: center; }
+.page-hero-team h2 { color: var(--white); }
 .page-hero-team .summary { color: rgba(255,255,255,0.85); }
 
 .site-footer { background: var(--brand-deep); }
 
 /* Inline accent helpers */
 .text-brand  { color: var(--brand); }
-.text-brand-dark { color: var(--brand-dark); }
+.text-brand-dark { color: var(--ink); }
 .bg-brand    { background: var(--brand); color: var(--white); }
+
+/* ==========================================
+   Dark mode — same navy/blue Denmark-GA family,
+   just inverted for a dark page surface. Brand
+   accents (--brand, --brand-bright, --brand-soft,
+   --bio-red) stay as-is: they already read fine
+   against a dark navy background.
+   ========================================== */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-1:    #0a1526;
+  --bg-2:    #0f1e35;
+  --beige:   #1f3252;
+  --muted:   #93a8c4;
+  --muted-2: #6c84a3;
+  --text:    #e4ecf7;
+
+  /* borders/shadows/heading "ink" that was --brand-dark in light mode
+     needs to lighten so it still reads against a dark page */
+  --ink:     #9fc6ee;
+  /* card/panel surfaces that were --white in light mode */
+  --surface: #101f38;
+}
 .border-brand { border-color: var(--brand); }

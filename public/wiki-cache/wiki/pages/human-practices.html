@@ -1,13 +1,19 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Human Practices — Denmark-GA iGEM 2025</title>
-    <base href="../" />
-    <link rel="stylesheet" href="static/style.css" />
-    <link rel="stylesheet" href="static/denmark.css" />
-    <link rel="stylesheet" href="static/section-blocks.css" />
+    <base href="../">
+    <script>
+      (function () {
+        var stored = localStorage.getItem('theme');
+        var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      })();
+    </script>
+    <link rel="stylesheet" href="static/style.css">
+    <link rel="stylesheet" href="static/denmark.css">
+    <link rel="stylesheet" href="static/section-blocks.css">
   </head>
   <body>
     <div id="scroll-progress"></div>
@@ -17,12 +23,12 @@
       <div class="toc-handle" aria-hidden="true">Table of Contents</div>
       <nav class="toc-nav" id="toc-links" aria-label="Page sections">
         <p class="toc-nav-heading">On this page</p>
-        <a href="#overview"    data-toc="overview">Overview</a>
-        <a href="#engagement"  data-toc="engagement">Stakeholder Engagement</a>
-        <a href="#voices"      data-toc="voices">Patient &amp; Community Voices</a>
-        <a href="#impact"      data-toc="impact">Impact on Project Design</a>
+        <a href="#overview" data-toc="overview">Overview</a>
+        <a href="#engagement" data-toc="engagement">Stakeholder Engagement</a>
+        <a href="#voices" data-toc="voices">Patient &amp; Community Voices</a>
+        <a href="#impact" data-toc="impact">Impact on Project Design</a>
         <a href="#reflections" data-toc="reflections">Reflections</a>
-        <a href="#references"  data-toc="references">References</a>
+        <a href="#references" data-toc="references">References</a>
       </nav>
     </aside>
 
@@ -30,7 +36,7 @@
       <div class="page-hero">
         <div class="container">
           <h2>Integrated Human Practices</h2>
-          <p class="summary">--</p>
+          <p class="summary">Test</p>
         </div>
       </div>
 
@@ -39,9 +45,17 @@
 
           <section class="wiki-section toc-section" id="overview">
             <h3>Overview</h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
+            <div class="section-block"><div class="image-carousel">
+  <div class="carousel-slide">
+    <img src="https://static.igem.wiki/teams/6112/wiki/blood2.avif" alt="HI" style="max-width:100%;display:block;margin:0 auto">
+    <p class="carousel-caption" style="text-align:center;font-style:italic;font-size:0.9em;color:#666;margin-top:0.4em">HI</p>
+  </div>
+  <div class="carousel-slide">
+    <img src="https://static.igem.wiki/teams/6112/wiki/blood2.avif" alt="TEST" style="max-width:100%;display:block;margin:0 auto">
+    <p class="carousel-caption" style="text-align:center;font-style:italic;font-size:0.9em;color:#666;margin-top:0.4em">TEST</p>
+  </div>
+</div>
+</div>
           </section>
 
           <section class="wiki-section toc-section" id="engagement">
@@ -84,11 +98,43 @@
     </main>
 
     <div id="footer"></div>
-    <a id="back-to-top" href="#" aria-label="Back to top">&#8679;</a>
+    <button id="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false" title="Toggle dark mode">
+      <span id="theme-toggle-icon" aria-hidden="true"></span>
+    </button>
+    <a id="back-to-top" href="#" aria-label="Back to top">⇧</a>
+    <script src="static/cursor.js"></script>
+    <script>
+      (function () {
+        var btn = document.getElementById('theme-toggle');
+        if (!btn) return;
+
+        function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+
+        function sync() {
+          var dark = isDark();
+          btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+          btn.setAttribute('title', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+
+        btn.addEventListener('click', function () {
+          var dark = !isDark();
+          if (dark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          localStorage.setItem('theme', dark ? 'dark' : 'light');
+          sync();
+        });
+
+        sync();
+      })();
+    </script>
     <script src="static/include.js"></script>
     <script src="static/toc-hover.js"></script>
     <script src="static/toc-watcher.js"></script>
-    <script src="static/content-loader.js"></script>
+    
       <script src="static/toc-drag.js"></script>
+      <script src="static/carousel.js"></script>
   </body>
 </html>

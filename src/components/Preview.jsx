@@ -107,10 +107,11 @@ export default function Preview({ selectedPage, content }) {
       fetchRaw(`wiki/pages/${selectedPage}.html`),
       fetchRaw('static/style.css').catch(() => ''),
       fetchRaw('static/denmark.css').catch(() => ''),
+      fetchRaw('static/section-blocks.css').catch(() => ''),
     ])
-      .then(([html, style, denmark]) => {
+      .then(([html, style, denmark, sectionBlocks]) => {
         setRawHtml(html);
-        setCss([style, denmark].filter(Boolean).join('\n'));
+        setCss([style, denmark, sectionBlocks].filter(Boolean).join('\n'));
       })
       .catch(err => setFetchError(err.message))
       .finally(() => setLoading(false));
