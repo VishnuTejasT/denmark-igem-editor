@@ -176,6 +176,117 @@ function TableInsertForm({ onInsert, onClose }) {
   );
 }
 
+// ─── Collapsible list insert form ────────────────────────────────────────────
+
+function CollapsibleListInsertForm({ onInsert, onClose }) {
+  const [heading, setHeading] = useState('');
+  const [rows, setRows] = useState([
+    { feature: '', rule: '', required: false, detail: '' },
+    { feature: '', rule: '', required: false, detail: '' },
+  ]);
+
+  const update = (i, key, val) =>
+    setRows(prev => prev.map((r, idx) => idx === i ? { ...r, [key]: val } : r));
+
+  const addRow = () => setRows(prev => [...prev, { feature: '', rule: '', required: false, detail: '' }]);
+  const removeRow = (i) => setRows(prev => prev.filter((_, idx) => idx !== i));
+
+  const esc = (s) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const handleInsert = () => {
+    const filled = rows.filter(r => r.feature.trim());
+    if (!filled.length) return;
+
+    const rowsHtml = filled.map(r => {
+      const required = r.required
+        ? `\n      <span class="cl-required">Required</span>`
+        : '';
+      return `  <details class="cl-row">
+    <summary>
+      <span class="cl-chevron" aria-hidden="true"></span>
+      <span class="cl-feature">${esc(r.feature)}</span>${required}
+      <span class="cl-rule">${esc(r.rule)}</span>
+    </summary>
+    <div class="cl-detail">${esc(r.detail)}</div>
+  </details>`;
+    }).join('\n');
+
+    const headHtml = heading.trim()
+      ? `\n  <div class="cl-table-head">\n    <span>${esc(heading)}</span>\n    <span>Rule / Range</span>\n  </div>`
+      : '';
+
+    onInsert(`\n<div class="cl-table">${headHtml}\n${rowsHtml}\n</div>\n`);
+    onClose();
+  };
+
+  return (
+    <div style={formStyles.panel}>
+      <div style={formStyles.panelTitle}>Insert Collapsible List</div>
+      <div style={formStyles.row}>
+        <input
+          style={{ ...formStyles.input, flex: 1 }}
+          placeholder="Left column header (e.g. Feature) — optional"
+          value={heading}
+          onChange={e => setHeading(e.target.value)}
+        />
+      </div>
+      {rows.map((row, i) => (
+        <div key={i} style={formStyles.clRowGroup}>
+          <div style={formStyles.carouselRow}>
+            <span style={formStyles.slideNum}>{i + 1}</span>
+            <input
+              style={{ ...formStyles.input, flex: 2 }}
+              placeholder="Feature (e.g. Primer length)"
+              value={row.feature}
+              onChange={e => update(i, 'feature', e.target.value)}
+            />
+            <input
+              style={{ ...formStyles.input, flex: 1 }}
+              placeholder="Rule / Range (e.g. 28–36 nt)"
+              value={row.rule}
+              onChange={e => update(i, 'rule', e.target.value)}
+            />
+            <label style={formStyles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={row.required}
+                onChange={e => update(i, 'required', e.target.checked)}
+              />
+              Required
+            </label>
+            {rows.length > 1 && (
+              <button style={formStyles.removeSlideBtn} onClick={() => removeRow(i)}>✕</button>
+            )}
+          </div>
+          <textarea
+            style={{ ...formStyles.input, ...formStyles.clDetailInput }}
+            placeholder="Expanded explanation shown when the row is opened"
+            rows={2}
+            value={row.detail}
+            onChange={e => update(i, 'detail', e.target.value)}
+          />
+        </div>
+      ))}
+      <div style={{ ...formStyles.row, marginTop: 6 }}>
+        <button style={formStyles.addSlideBtn} onClick={addRow}>+ Add row</button>
+        <div style={{ flex: 1 }} />
+        <button
+          style={formStyles.insertBtn}
+          onClick={handleInsert}
+          disabled={!rows.some(r => r.feature.trim())}
+        >
+          Insert List
+        </button>
+        <button style={formStyles.cancelBtn} onClick={onClose}>Cancel</button>
+      </div>
+      <div style={formStyles.tableHint}>
+        Renders as a native, no-JS expand/collapse list (using <code>&lt;details&gt;</code>).
+        Styling comes from the wiki's own stylesheet — see the <code>.cl-*</code> classes.
+      </div>
+    </div>
+  );
+}
+
 // ─── Main editor component ───────────────────────────────────────────────────
 
 export default function Editor({ content, onChange }) {
@@ -269,6 +380,12 @@ export default function Editor({ content, onChange }) {
               Table
             </button>
             <button
+              style={{ ...styles.snippetBtn, ...(activePanels[section.id] === 'collapsible' ? styles.snippetBtnActive : {}) }}
+              onClick={() => togglePanel(section.id, 'collapsible')}
+            >
+              Collapsible List
+            </button>
+            <button
               style={styles.snippetBtn}
               onClick={() => appendToBody(section.id, '\n> **[N]** Author(s). Title. *Journal* Year;Vol:Pages.\n')}
             >
@@ -297,6 +414,12 @@ export default function Editor({ content, onChange }) {
           )}
           {activePanels[section.id] === 'table' && (
             <TableInsertForm
+              onInsert={snippet => appendToBody(section.id, snippet)}
+              onClose={() => closePanel(section.id)}
+            />
+          )}
+          {activePanels[section.id] === 'collapsible' && (
+            <CollapsibleListInsertForm
               onInsert={snippet => appendToBody(section.id, snippet)}
               onClose={() => closePanel(section.id)}
             />
@@ -403,4 +526,7 @@ const formStyles = {
   },
   tableLabel: { fontSize: 12, color: '#666' },
   tableHint: { fontSize: 11, color: '#888', lineHeight: 1.6 },
+  clRowGroup: { marginBottom: 10, paddingBottom: 10, borderBottom: '1px dashed #dde6f7' },
+  clDetailInput: { width: '100%', marginTop: 6, resize: 'vertical', fontFamily: 'inherit' },
+  checkboxLabel: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#666', flexShrink: 0, whiteSpace: 'nowrap' },
 };
