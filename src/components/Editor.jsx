@@ -387,7 +387,9 @@ export default function Editor({ content, onChange }) {
               onBlur={() => resyncSectionId(section.id)}
               placeholder="Section name"
             />
-            <span style={styles.sectionId}>#{section.id}</span>
+            <span style={styles.sectionId}>
+              #{uniqueSectionId(section.heading, content.sections.filter(o => o.id !== section.id).map(o => o.id))}
+            </span>
             <button
               style={styles.iconBtn}
               disabled={i === 0}
