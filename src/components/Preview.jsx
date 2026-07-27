@@ -43,6 +43,16 @@ function buildHtml(rawHtml, css, content) {
   const injectedScript = `<script>
 (function() {
   var content = ${contentJson};
+  function byId(id) {
+    // Ids come from slugify() and should already be safe, but escape anyway
+    // so a stray character never throws a SyntaxError and aborts the caller.
+    if (!id) return null;
+    try {
+      return document.getElementById(id) || document.querySelector('.toc-section#' + CSS.escape(id));
+    } catch (err) {
+      return null;
+    }
+  }
   function pruneOrphanedInjectedSections(c) {
     // Sections we injected dynamically (see createSection) whose id no longer
     // matches anything in the current draft are stale — e.g. the user renamed
@@ -58,6 +68,12 @@ function buildHtml(rawHtml, css, content) {
     });
   }
   function createSection(s) {
+    // Guard against re-creating a section that already exists under this id —
+    // without this, a lookup miss on every content push (e.g. from a stale
+    // sourceId) would keep appending fresh duplicates forever.
+    var existing = byId(s.id);
+    if (existing) return existing;
+
     var container = document.querySelector('.page-content .container');
     if (!container) return null;
 
@@ -77,7 +93,7 @@ function buildHtml(rawHtml, css, content) {
     container.appendChild(sec);
 
     var tocNav = document.querySelector('.toc-nav');
-    if (tocNav) {
+    if (tocNav && !document.querySelector('.toc-nav a[data-toc="' + s.id + '"]')) {
       var link = document.createElement('a');
       link.setAttribute('href', '#' + s.id);
       link.setAttribute('data-toc', s.id);
@@ -88,56 +104,64 @@ function buildHtml(rawHtml, css, content) {
     return sec;
   }
   function applyContent(c) {
-    var h2 = document.querySelector('.page-hero h2');
-    if (h2 && c.title) h2.textContent = c.title;
-    var summary = document.querySelector('.page-hero .summary');
-    if (summary && c.intro) summary.textContent = c.intro;
-    pruneOrphanedInjectedSections(c);
-    (c.sections || []).forEach(function(s) {
-      // Look the element up by its original anchor (sourceId), since id
-      // may have already drifted away from it to match a renamed heading.
-      var lookupId = s.sourceId || s.id;
-      var sec = document.querySelector('.toc-section#' + lookupId);
-      if (!sec) {
-        sec = createSection(s);
-        if (!sec) return;
-      } else {
-        if (sec.id !== s.id) sec.id = s.id;
-        if (s.heading) {
-          var h3 = sec.querySelector('h3');
-          if (h3) h3.textContent = s.heading;
-        }
-        var tocLink = document.querySelector('.toc-nav a[data-toc="' + lookupId + '"]');
-        if (tocLink) {
-          if (s.heading) tocLink.textContent = s.heading;
-          if (tocLink.getAttribute('data-toc') !== s.id) {
-            tocLink.setAttribute('data-toc', s.id);
-            tocLink.setAttribute('href', '#' + s.id);
+    try {
+      var h2 = document.querySelector('.page-hero h2');
+      if (h2 && c.title) h2.textContent = c.title;
+      var summary = document.querySelector('.page-hero .summary');
+      if (summary && c.intro) summary.textContent = c.intro;
+      pruneOrphanedInjectedSections(c);
+      (c.sections || []).forEach(function(s) {
+        try {
+          // Look the element up by its original anchor (sourceId), since id
+          // may have already drifted away from it to match a renamed heading.
+          var lookupId = s.sourceId || s.id;
+          var sec = byId(lookupId) || byId(s.id);
+          if (!sec) {
+            sec = createSection(s);
+            if (!sec) return;
+          } else {
+            if (sec.id !== s.id) sec.id = s.id;
+            if (s.heading) {
+              var h3 = sec.querySelector('h3');
+              if (h3) h3.textContent = s.heading;
+            }
+            var tocLink = document.querySelector('.toc-nav a[data-toc="' + lookupId + '"]');
+            if (tocLink) {
+              if (s.heading) tocLink.textContent = s.heading;
+              if (tocLink.getAttribute('data-toc') !== s.id) {
+                tocLink.setAttribute('data-toc', s.id);
+                tocLink.setAttribute('href', '#' + s.id);
+              }
+            }
           }
+          var refsList = sec.querySelector('.references-list');
+          if (refsList) {
+            var items = s.items || [];
+            if (items.length) {
+              refsList.innerHTML = items.map(function(h) { return '<li class="section-block">' + h + '</li>'; }).join('\\n');
+            }
+          } else {
+            var body = s.body || '';
+            if (body) {
+              var block = sec.querySelector('.section-block');
+              if (block) block.innerHTML = body;
+            }
+          }
+        } catch (sectionErr) {
+          console.error('[wiki-preview] failed to apply section', s && s.id, sectionErr);
         }
-      }
-      var refsList = sec.querySelector('.references-list');
-      if (refsList) {
-        var items = s.items || [];
-        if (items.length) {
-          refsList.innerHTML = items.map(function(h) { return '<li class="section-block">' + h + '</li>'; }).join('\\n');
-        }
-      } else {
-        var body = s.body || '';
-        if (body) {
-          var block = sec.querySelector('.section-block');
-          if (block) block.innerHTML = body;
-        }
-      }
-    });
-    var container = document.querySelector('.page-content .container');
-    var tocNav = document.querySelector('.toc-nav');
-    (c.sections || []).forEach(function(s) {
-      var sec = document.querySelector('.toc-section#' + s.id);
-      if (sec && container) container.appendChild(sec);
-      var tocLink = document.querySelector('.toc-nav a[data-toc="' + s.id + '"]');
-      if (tocLink && tocNav) tocNav.appendChild(tocLink);
-    });
+      });
+      var container = document.querySelector('.page-content .container');
+      var tocNav = document.querySelector('.toc-nav');
+      (c.sections || []).forEach(function(s) {
+        var sec = byId(s.id);
+        if (sec && container) container.appendChild(sec);
+        var tocLink = document.querySelector('.toc-nav a[data-toc="' + s.id + '"]');
+        if (tocLink && tocNav) tocNav.appendChild(tocLink);
+      });
+    } catch (err) {
+      console.error('[wiki-preview] applyContent failed', err);
+    }
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() { applyContent(content); });
