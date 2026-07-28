@@ -161,6 +161,28 @@ export function sectionIsFilled(section) {
   return migrateSection(section).some(blockHasContent);
 }
 
+// Collapse duplicate empty subsections (same heading, no content) down to one.
+// Repairs drafts corrupted by repeated "+ Subsection" clicks during the
+// preview-freeze bug, without touching subsections that actually have content.
+export function dedupeEmptySubsections(blocks) {
+  const seenEmptyHeadings = new Set();
+  const result = [];
+  for (const b of blocks || []) {
+    if (b.type !== 'subsection') {
+      result.push(b);
+      continue;
+    }
+    const cleaned = { ...b, blocks: dedupeEmptySubsections(b.blocks) };
+    if (!blockHasContent(cleaned)) {
+      const key = cleaned.heading || '';
+      if (seenEmptyHeadings.has(key)) continue;
+      seenEmptyHeadings.add(key);
+    }
+    result.push(cleaned);
+  }
+  return result;
+}
+
 // Back-compat: convert a legacy `{ body: markdownString }` section (or the
 // even older `{ blocks: [{ body }] }` shim) into the current blocks array.
 // Sections saved after the block-editor rewrite already carry `blocks` and

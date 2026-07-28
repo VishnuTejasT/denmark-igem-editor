@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchPage, commitPage, fetchPageMeta, fetchCommitInfo } from '../lib/gitlab';
 import { parseSectionsFromHtml } from '../lib/htmlParser';
-import { migrateSection, sectionIsFilled, uniqueSectionId } from '../lib/blocks';
+import { migrateSection, sectionIsFilled, uniqueSectionId, dedupeEmptySubsections } from '../lib/blocks';
 import Editor from '../components/Editor';
 import Preview from '../components/Preview';
 
@@ -222,7 +222,20 @@ export default function EditorPage() {
       } else {
         const { content: fetched, lastCommitId: cid } = jsonResult.value;
         const draft = sessionStorage.getItem(`wiki_draft_${pageName}`);
-        setContent(draft ? JSON.parse(draft) : normalizeContent(fetched, sections));
+        if (draft) {
+          const parsed = JSON.parse(draft);
+          const cleaned = {
+            ...parsed,
+            sections: (parsed.sections || []).map(s => ({
+              ...s,
+              blocks: dedupeEmptySubsections(migrateSection(s)),
+            })),
+          };
+          setContent(cleaned);
+          sessionStorage.setItem(`wiki_draft_${pageName}`, JSON.stringify(cleaned));
+        } else {
+          setContent(normalizeContent(fetched, sections));
+        }
         setLastCommitId(cid);
         lastCommitIdRef.current = cid;
       }
