@@ -183,6 +183,27 @@ export function dedupeEmptySubsections(blocks) {
   return result;
 }
 
+// Collapse duplicate top-level sections sharing the same id down to one.
+// Repairs pages committed while a prior bug let "+ Add Section" (or the HTML
+// template itself) produce two sections with an identical id/heading/blocks.
+// When one copy has real content and the other doesn't, the filled one wins.
+export function dedupeSections(sections) {
+  const seenAt = new Map();
+  const result = [];
+  for (const s of sections || []) {
+    const existingIndex = seenAt.get(s.id);
+    if (existingIndex === undefined) {
+      seenAt.set(s.id, result.length);
+      result.push(s);
+      continue;
+    }
+    if (!sectionIsFilled(result[existingIndex]) && sectionIsFilled(s)) {
+      result[existingIndex] = s;
+    }
+  }
+  return result;
+}
+
 // Back-compat: convert a legacy `{ body: markdownString }` section (or the
 // even older `{ blocks: [{ body }] }` shim) into the current blocks array.
 // Sections saved after the block-editor rewrite already carry `blocks` and

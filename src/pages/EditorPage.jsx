@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchPage, commitPage, fetchPageMeta, fetchCommitInfo } from '../lib/gitlab';
 import { parseSectionsFromHtml } from '../lib/htmlParser';
-import { migrateSection, sectionIsFilled, uniqueSectionId, dedupeEmptySubsections } from '../lib/blocks';
+import { migrateSection, sectionIsFilled, uniqueSectionId, dedupeEmptySubsections, dedupeSections } from '../lib/blocks';
 import Editor from '../components/Editor';
 import Preview from '../components/Preview';
 
@@ -36,7 +36,7 @@ function normalizeContent(content, htmlSections) {
   const savedBlocks = {};
   const savedHeadings = {};
   const savedSourceId = {};
-  (content.sections || []).forEach(s => {
+  dedupeSections(content.sections || []).forEach(s => {
     savedBlocks[s.id] = migrateSection(s);
     if (s.heading) savedHeadings[s.id] = s.heading;
     // sourceId is the anchor id actually present in the HTML template — kept
@@ -51,7 +51,7 @@ function normalizeContent(content, htmlSections) {
   // "move section"). Any section present in the HTML template but not yet in
   // the saved JSON (e.g. added to the page template since the last commit)
   // gets appended at the end.
-  const savedIds = (content.sections || []).map(s => s.id);
+  const savedIds = dedupeSections(content.sections || []).map(s => s.id);
   const extraHtmlIds = htmlSections.map(s => s.id).filter(id => !savedIds.includes(id));
   const orderedIds = [...savedIds, ...extraHtmlIds];
 
@@ -226,7 +226,7 @@ export default function EditorPage() {
           const parsed = JSON.parse(draft);
           const cleaned = {
             ...parsed,
-            sections: (parsed.sections || []).map(s => ({
+            sections: dedupeSections(parsed.sections || []).map(s => ({
               ...s,
               blocks: dedupeEmptySubsections(migrateSection(s)),
             })),
