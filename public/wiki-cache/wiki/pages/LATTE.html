@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Software 2 — Denmark-GA iGEM 2025</title>
+    <base href="../">
+    <script>
+      (function () {
+        var stored = localStorage.getItem('theme');
+        var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      })();
+    </script>
+    <link rel="stylesheet" href="static/style.css">
+    <link rel="stylesheet" href="static/denmark.css">
+    <link rel="stylesheet" href="static/section-blocks.css">
+  </head>
+  <body>
+    <div id="scroll-progress"></div>
+    <div id="nav"></div>
+
+    <aside class="toc-sidebar" aria-label="Table of contents">
+      <div class="toc-handle" aria-hidden="true">Table of Contents</div>
+      <nav class="toc-nav" id="toc-links" aria-label="Page sections">
+        <p class="toc-nav-heading">On this page</p>
+        
+        
+        
+        
+        
+      <a href="#overview" data-toc="overview">Overview</a><a href="#workflow" data-toc="workflow">Judging</a><a href="#implementation" data-toc="implementation">Scanner</a><a href="#results" data-toc="results">Calculator</a><a href="#references" data-toc="references">References</a></nav>
+    </aside>
+
+    <main>
+      <div class="page-hero">
+        <div class="container">
+          <h2>LATTE</h2>
+          <p class="summary">LOCKR Affinity and Thermodynamics Tuning Engine</p>
+        </div>
+      </div>
+
+      <div class="page-content">
+        <div class="container">
+
+          
+
+          
+
+          
+
+          
+
+                    
+
+          
+
+        <section class="wiki-section toc-section" id="overview"><h3>Overview</h3><div class="section-block"><p>Designing a LOCKR system is often time-intensive, and grafting a binder into perfect location of the protein's latch is difficult. To make things harder, deteg the efficiency of the LOCKR system simmers down to a ton of thermodynamics equations. </p>
+</div></section><section class="wiki-section toc-section" id="workflow">
+            <h3>Judging</h3>
+            <div class="section-block"><p>--</p>
+</div>
+          </section><section class="wiki-section toc-section" id="implementation">
+            <h3>Scanner</h3>
+            <div class="section-block"><p>--</p>
+</div>
+          </section><section class="wiki-section toc-section" id="results">
+            <h3>Calculator</h3>
+            <div class="section-block"><p>--</p>
+</div>
+          </section><section class="wiki-section toc-section" id="references">
+            <h3>References</h3>
+            <ol class="references-list"><li class="section-block"><p>--</p>
+</li></ol>
+          </section></div>
+      </div>
+    </main>
+
+    <div id="footer"></div>
+    <button id="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false" title="Toggle dark mode">
+      <span id="theme-toggle-icon" aria-hidden="true"></span>
+    </button>
+    <a id="back-to-top" href="#" aria-label="Back to top">⇧</a>
+    <script src="static/cursor.js"></script>
+    <script>
+      (function () {
+        var btn = document.getElementById('theme-toggle');
+        if (!btn) return;
+
+        function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+
+        function sync() {
+          var dark = isDark();
+          btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+          btn.setAttribute('title', dark ? 'Switch to light mode' : 'Switch to dark mode');
+        }
+
+        btn.addEventListener('click', function () {
+          var dark = !isDark();
+          if (dark) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+          }
+          localStorage.setItem('theme', dark ? 'dark' : 'light');
+          sync();
+        });
+
+        sync();
+      })();
+    </script>
+    <script src="static/include.js"></script>
+    <script src="static/toc-hover.js"></script>
+    <script src="static/toc-watcher.js"></script>
+    
+      <script src="static/toc-drag.js"></script>
+      <script src="static/carousel.js"></script>
+  
+
+</body></html>

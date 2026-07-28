@@ -33,7 +33,7 @@ function rewriteAssetUrls(html) {
     .replace(/(src|href)='static\//g, `$1='${STATIC_RAW_BASE}static/`);
 }
 
-function buildHtml(rawHtml, css, content) {
+export function buildHtml(rawHtml, css, content) {
   let html = rewriteAssetUrls(rawHtml);
   html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
 
@@ -217,9 +217,12 @@ function buildHtml(rawHtml, css, content) {
             }
           } else {
             // Replace the section's cards wholesale — a section can hold
-            // several `.section-block` cards now (standalone blocks and
+            // several .section-block cards now (standalone blocks and
             // subsections each get their own), so writing into a single
             // existing one is not enough.
+            // NB: no backticks or dollar-braces anywhere in this script — it
+            // lives inside a JS template literal, so either would terminate
+            // it early and turn prose into executable code.
             var cards = s.cards || [];
             if (cards.length) {
               var existingCards = [];

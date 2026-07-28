@@ -4,8 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/fetch-wiki-files.js && vite build",
-    "preview": "vite preview"
+    "build": "node scripts/check-injected-script.mjs && node scripts/fetch-wiki-files.js && vite build",
+    "preview": "vite preview",
+    "check": "node scripts/check-injected-script.mjs"
   },
   "dependencies": {
     "@uiw/react-md-editor": "^4.1.1",
