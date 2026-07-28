@@ -1,4 +1,4 @@
-import { sectionBodyHtml, sectionBodyListItems } from './blocks';
+import { sectionCardsHtml, sectionBodyListItems } from './blocks';
 
 const GITLAB_HOST = (import.meta.env.VITE_GITLAB_HOST || 'gitlab.igem.org').replace(/^https?:\/\//, '');
 const BASE = `https://${GITLAB_HOST}/api/v4`;
@@ -164,10 +164,17 @@ async function generatePageHtml(pageName, content) {
       const items = sectionBodyListItems(s.blocks);
       if (items) refsList.innerHTML = items;
     } else {
-      const renderedBody = sectionBodyHtml(s.blocks);
-      if (renderedBody) {
-        const block = sec.querySelector('.section-block');
-        if (block) block.innerHTML = renderedBody;
+      // Replace the section's cards wholesale — a section can now hold several
+      // `.section-block` cards (standalone blocks and subsections each get
+      // their own), so writing into a single existing one is not enough.
+      const cards = sectionCardsHtml(s.blocks);
+      if (cards.length) {
+        Array.from(sec.children)
+          .filter(el => el.classList && el.classList.contains('section-block'))
+          .forEach(el => el.remove());
+        const tmp = doc.createElement('div');
+        tmp.innerHTML = cards.join('\n');
+        while (tmp.firstElementChild) sec.appendChild(tmp.firstElementChild);
       }
     }
   }

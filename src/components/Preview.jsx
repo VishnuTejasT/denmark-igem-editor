@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { sectionBodyBlocksHtml } from '../lib/blocks';
+import { sectionBodyBlocksHtml, sectionCardsHtml } from '../lib/blocks';
 
 const STATIC_RAW_BASE =
   `https://gitlab.igem.org/${import.meta.env.VITE_GITLAB_REPO_PATH || 'vishnutejast/denmarkwiki'}/-/raw/${import.meta.env.VITE_GITLAB_BRANCH || 'main'}/`;
@@ -21,6 +21,7 @@ function renderContent(content) {
         ...s,
         body: items.join('\n'),
         items,
+        cards: sectionCardsHtml(s.blocks),
       };
     }),
   };
@@ -215,10 +216,23 @@ function buildHtml(rawHtml, css, content) {
               refsList.innerHTML = items.map(function(h) { return '<li class="section-block">' + h + '</li>'; }).join('\\n');
             }
           } else {
-            var body = s.body || '';
-            if (body) {
-              var block = sec.querySelector('.section-block');
-              if (block) block.innerHTML = body;
+            // Replace the section's cards wholesale — a section can hold
+            // several `.section-block` cards now (standalone blocks and
+            // subsections each get their own), so writing into a single
+            // existing one is not enough.
+            var cards = s.cards || [];
+            if (cards.length) {
+              var existingCards = [];
+              for (var ci = 0; ci < sec.children.length; ci++) {
+                var childEl = sec.children[ci];
+                if (childEl.classList && childEl.classList.contains('section-block')) {
+                  existingCards.push(childEl);
+                }
+              }
+              existingCards.forEach(function(el) { el.remove(); });
+              var tmp = document.createElement('div');
+              tmp.innerHTML = cards.join('\\n');
+              while (tmp.firstElementChild) sec.appendChild(tmp.firstElementChild);
             }
           }
         } catch (sectionErr) {

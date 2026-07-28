@@ -117,15 +117,53 @@ export function blockToHtml(block) {
     case 'subsection': {
       const heading = block.heading ? esc(block.heading) : '';
       const inner = (block.blocks || []).map(blockToHtml).filter(Boolean).join('\n');
-      return `<div class="section-block" style="margin-top:26px">\n  <span class="section-block-label">${heading}</span>\n${inner}\n</div>`;
+      // Spacing between stacked cards comes from `.section-block +
+      // .section-block` in the stylesheet, so no inline margin is needed.
+      return `<div class="section-block">\n  <span class="section-block-label">${heading}</span>\n${inner}\n</div>`;
     }
     default:
       return '';
   }
 }
 
+// Flat render of every block into one blob. Superseded by sectionCardsHtml()
+// for section bodies; kept for callers that want the merged form.
 export function sectionBodyHtml(blocks) {
   return (blocks || []).map(blockToHtml).filter(Boolean).join('\n');
+}
+
+// Split a section's blocks into one or more `.section-block` cards.
+//
+// A subsection is always its own card (it carries its own label pill), and any
+// block flagged `standalone` breaks out into its own card too. Everything else
+// accumulates into a shared card with its neighbours, so consecutive ordinary
+// blocks keep reading as one continuous piece of prose. Cards stack with the
+// spacing from `.section-block + .section-block` in the stylesheet.
+export function sectionCardsHtml(blocks) {
+  const cards = [];
+  let run = [];
+
+  const flushRun = () => {
+    if (!run.length) return;
+    const inner = run.map(blockToHtml).filter(Boolean).join('\n');
+    if (inner.trim()) cards.push(`<div class="section-block">\n${inner}\n</div>`);
+    run = [];
+  };
+
+  for (const b of blocks || []) {
+    if (b.type === 'subsection' || b.standalone) {
+      flushRun();
+      const html = blockToHtml(b);
+      if (!html || !html.trim()) continue;
+      // A subsection already renders as a full card; anything else needs wrapping.
+      cards.push(b.type === 'subsection' ? html : `<div class="section-block">\n${html}\n</div>`);
+    } else {
+      run.push(b);
+    }
+  }
+  flushRun();
+
+  return cards;
 }
 
 // Per-block rendered HTML, used for containers (like the References <ol>)

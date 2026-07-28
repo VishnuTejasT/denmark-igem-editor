@@ -218,6 +218,19 @@ function BlockItem({ block, onChange, onRemove, onMoveUp, onMoveDown, canMoveUp,
       <div style={styles.blockHeader}>
         <span style={styles.blockType}>{BLOCK_LABELS[block.type] || block.type}</span>
         <div style={{ flex: 1 }} />
+        {/* Subsections are always their own card, so the toggle only applies to
+            ordinary blocks — and only at the top level, since cards don't nest. */}
+        {block.type !== 'subsection' && depth === 0 && (
+          <button
+            style={block.standalone ? styles.cardToggleOn : styles.cardToggle}
+            onClick={() => onChange({ ...block, standalone: !block.standalone })}
+            title={block.standalone
+              ? 'This block is in its own card — click to merge it into the card above'
+              : 'This block shares a card with its neighbours — click to give it its own card'}
+          >
+            {block.standalone ? '▣ Own card' : '▢ Own card'}
+          </button>
+        )}
         <button style={styles.iconBtn} disabled={!canMoveUp} onClick={onMoveUp} title="Move up">↑</button>
         <button style={styles.iconBtn} disabled={!canMoveDown} onClick={onMoveDown} title="Move down">↓</button>
         <button style={styles.removeBtn} onClick={onRemove}>✕ Remove</button>
@@ -504,6 +517,14 @@ const styles = {
   removeBtn: {
     border: '1px solid #fcc', background: '#fff', color: '#c44', borderRadius: 5,
     padding: '2px 9px', cursor: 'pointer', fontSize: 12,
+  },
+  cardToggle: {
+    border: '1px solid #ddd', background: '#fff', color: '#888', borderRadius: 5,
+    padding: '2px 9px', cursor: 'pointer', fontSize: 12, whiteSpace: 'nowrap',
+  },
+  cardToggleOn: {
+    border: '1px solid #9cc4ee', background: '#e8f0fe', color: '#1a73e8', borderRadius: 5,
+    padding: '2px 9px', cursor: 'pointer', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
   },
   nestedBlockList: {
     marginTop: 8, marginBottom: 4, paddingLeft: 14, borderLeft: '2px solid #e8f0fe',
