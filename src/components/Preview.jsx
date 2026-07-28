@@ -43,15 +43,49 @@ function buildHtml(rawHtml, css, content) {
   const injectedScript = `<script>
 (function() {
   var content = ${contentJson};
+
+  // Resolved-node cache, keyed by section id. Once an id has been resolved to
+  // a DOM node (found in the raw template or created by us), every later
+  // lookup for that id goes through this cache instead of re-querying the
+  // DOM. This is what actually makes section resolution idempotent: the raw
+  // wiki template can itself contain duplicate ids (e.g. a section that was
+  // duplicated before being committed), and document.getElementById on a
+  // duplicate id is not a reliable "have we already handled this?" check —
+  // relying on it let createSection() re-fire on every content push and
+  // append a fresh duplicate section forever.
+  var nodeById = {};
+  var tocLinkById = {};
+  document.querySelectorAll('.toc-section').forEach(function(sec) {
+    if (sec.id && !nodeById[sec.id]) nodeById[sec.id] = sec;
+  });
+  document.querySelectorAll('.toc-nav a[data-toc]').forEach(function(a) {
+    var key = a.getAttribute('data-toc');
+    if (key && !tocLinkById[key]) tocLinkById[key] = a;
+  });
+
   function byId(id) {
+    if (!id) return null;
+    if (nodeById[id]) return nodeById[id];
     // Ids come from slugify() and should already be safe, but escape anyway
     // so a stray character never throws a SyntaxError and aborts the caller.
-    if (!id) return null;
     try {
-      return document.getElementById(id) || document.querySelector('.toc-section#' + CSS.escape(id));
+      var found = document.getElementById(id) || document.querySelector('.toc-section#' + CSS.escape(id));
+      if (found) nodeById[id] = found;
+      return found;
     } catch (err) {
       return null;
     }
+  }
+  function tocLinkFor(id) {
+    if (!id) return null;
+    if (tocLinkById[id]) return tocLinkById[id];
+    var found = document.querySelector('.toc-nav a[data-toc="' + id + '"]');
+    if (found) tocLinkById[id] = found;
+    return found;
+  }
+  function renameId(map, oldId, newId, node) {
+    if (oldId && map[oldId] === node) delete map[oldId];
+    map[newId] = node;
   }
   function pruneOrphanedInjectedSections(c) {
     // Sections we injected dynamically (see createSection) whose id no longer
@@ -61,16 +95,17 @@ function buildHtml(rawHtml, css, content) {
     var liveIds = (c.sections || []).map(function(s) { return s.id; });
     document.querySelectorAll('.toc-section[data-injected]').forEach(function(sec) {
       if (liveIds.indexOf(sec.id) === -1) {
-        var tocLink = document.querySelector('.toc-nav a[data-toc="' + sec.id + '"]');
-        if (tocLink) tocLink.remove();
+        var tocLink = tocLinkFor(sec.id);
+        if (tocLink) { tocLink.remove(); delete tocLinkById[sec.id]; }
+        delete nodeById[sec.id];
         sec.remove();
       }
     });
   }
   function createSection(s) {
     // Guard against re-creating a section that already exists under this id —
-    // without this, a lookup miss on every content push (e.g. from a stale
-    // sourceId) would keep appending fresh duplicates forever.
+    // checked via the node cache, not a DOM re-query, so it holds even when
+    // the raw template has duplicate ids or a lookup would otherwise miss.
     var existing = byId(s.id);
     if (existing) return existing;
 
@@ -91,14 +126,16 @@ function buildHtml(rawHtml, css, content) {
     sec.appendChild(block);
 
     container.appendChild(sec);
+    nodeById[s.id] = sec;
 
     var tocNav = document.querySelector('.toc-nav');
-    if (tocNav && !document.querySelector('.toc-nav a[data-toc="' + s.id + '"]')) {
+    if (tocNav && !tocLinkFor(s.id)) {
       var link = document.createElement('a');
       link.setAttribute('href', '#' + s.id);
       link.setAttribute('data-toc', s.id);
       link.textContent = s.heading || '';
       tocNav.appendChild(link);
+      tocLinkById[s.id] = link;
     }
 
     return sec;
@@ -120,12 +157,18 @@ function buildHtml(rawHtml, css, content) {
             sec = createSection(s);
             if (!sec) return;
           } else {
-            if (sec.id !== s.id) sec.id = s.id;
+            if (sec.id !== s.id) {
+              var oldId = sec.id;
+              renameId(nodeById, oldId, s.id, sec);
+              sec.id = s.id;
+              var linkToRename = tocLinkFor(oldId);
+              if (linkToRename) renameId(tocLinkById, oldId, s.id, linkToRename);
+            }
             if (s.heading) {
               var h3 = sec.querySelector('h3');
               if (h3) h3.textContent = s.heading;
             }
-            var tocLink = document.querySelector('.toc-nav a[data-toc="' + lookupId + '"]');
+            var tocLink = tocLinkFor(s.id) || tocLinkFor(lookupId);
             if (tocLink) {
               if (s.heading) tocLink.textContent = s.heading;
               if (tocLink.getAttribute('data-toc') !== s.id) {
@@ -156,7 +199,7 @@ function buildHtml(rawHtml, css, content) {
       (c.sections || []).forEach(function(s) {
         var sec = byId(s.id);
         if (sec && container) container.appendChild(sec);
-        var tocLink = document.querySelector('.toc-nav a[data-toc="' + s.id + '"]');
+        var tocLink = tocLinkFor(s.id);
         if (tocLink && tocNav) tocNav.appendChild(tocLink);
       });
     } catch (err) {
