@@ -55,13 +55,29 @@ function buildHtml(rawHtml, css, content) {
   // append a fresh duplicate section forever.
   var nodeById = {};
   var tocLinkById = {};
-  document.querySelectorAll('.toc-section').forEach(function(sec) {
-    if (sec.id && !nodeById[sec.id]) nodeById[sec.id] = sec;
-  });
-  document.querySelectorAll('.toc-nav a[data-toc]').forEach(function(a) {
-    var key = a.getAttribute('data-toc');
-    if (key && !tocLinkById[key]) tocLinkById[key] = a;
-  });
+  function seedCaches() {
+    // The raw wiki template can itself contain duplicate ids (e.g. a section
+    // committed twice before this bug was caught). getElementById only ever
+    // resolves the first one, which leaves every later duplicate as a stale,
+    // never-updated orphan — and since the reorder pass below only moves
+    // elements it actually looks up, that untouched orphan drifts to the
+    // front of the page as everything else gets moved past it. Strip
+    // duplicates outright at init so every id maps to exactly one node.
+    // This has to run after the body has actually been parsed — this script
+    // sits in <head>, so running it inline (before DOMContentLoaded) would
+    // scan an empty document and silently seed nothing.
+    document.querySelectorAll('.toc-section').forEach(function(sec) {
+      if (!sec.id) return;
+      if (nodeById[sec.id]) { sec.remove(); return; }
+      nodeById[sec.id] = sec;
+    });
+    document.querySelectorAll('.toc-nav a[data-toc]').forEach(function(a) {
+      var key = a.getAttribute('data-toc');
+      if (!key) return;
+      if (tocLinkById[key]) { a.remove(); return; }
+      tocLinkById[key] = a;
+    });
+  }
 
   function byId(id) {
     if (!id) return null;
@@ -206,10 +222,14 @@ function buildHtml(rawHtml, css, content) {
       console.error('[wiki-preview] applyContent failed', err);
     }
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() { applyContent(content); });
-  } else {
+  function init() {
+    seedCaches();
     applyContent(content);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
   window.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'WIKI_CONTENT') applyContent(e.data.content);
