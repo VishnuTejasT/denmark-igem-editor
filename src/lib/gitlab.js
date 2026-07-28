@@ -91,6 +91,26 @@ async function generatePageHtml(pageName, content) {
   // Remove content-loader.js — content is now baked in, no runtime fetch needed.
   doc.querySelectorAll('script[src*="content-loader"]').forEach(s => s.remove());
 
+  // The page template can itself contain duplicate section ids (e.g. a
+  // section that got committed twice by this exact bug before it was
+  // caught). querySelector(`#id`) below only ever resolves the first match,
+  // silently leaving every later duplicate as an untouched orphan that then
+  // gets committed right back into the output HTML, compounding on every
+  // save. Strip duplicates up front so every id maps to exactly one element.
+  const seenSectionIds = new Set();
+  doc.querySelectorAll('.toc-section').forEach(sec => {
+    if (!sec.id) return;
+    if (seenSectionIds.has(sec.id)) { sec.remove(); return; }
+    seenSectionIds.add(sec.id);
+  });
+  const seenTocIds = new Set();
+  doc.querySelectorAll('.toc-nav a[data-toc]').forEach(a => {
+    const key = a.getAttribute('data-toc');
+    if (!key) return;
+    if (seenTocIds.has(key)) { a.remove(); return; }
+    seenTocIds.add(key);
+  });
+
   if (content.title) {
     const h2 = doc.querySelector('.page-hero h2');
     if (h2) h2.textContent = content.title;
