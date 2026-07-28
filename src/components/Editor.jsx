@@ -324,7 +324,12 @@ export default function Editor({ content, onChange }) {
     if (!section) return;
     const nextId = uniqueSectionId(section.heading, reservedIds(id));
     if (nextId === id) return;
-    const sections = content.sections.map(s => s.id === id ? { ...s, id: nextId } : s);
+    // Lock in sourceId before id drifts away from it. Without this, a
+    // section whose sourceId was never set (e.g. loaded from an older draft)
+    // loses track of its real HTML anchor on every rename — each edit then
+    // orphans the previous element and creates a brand new one instead of
+    // renaming in place, leaving stale duplicate sections behind forever.
+    const sections = content.sections.map(s => s.id === id ? { ...s, id: nextId, sourceId: s.sourceId || id } : s);
     onChange({ ...content, sections });
   };
 

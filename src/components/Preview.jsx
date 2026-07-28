@@ -103,19 +103,20 @@ function buildHtml(rawHtml, css, content) {
     if (oldId && map[oldId] === node) delete map[oldId];
     map[newId] = node;
   }
-  function pruneOrphanedInjectedSections(c) {
-    // Sections we injected dynamically (see createSection) whose id no longer
-    // matches anything in the current draft are stale — e.g. the user renamed
-    // a brand-new section, which re-slugs its id and would otherwise leave the
-    // previous DOM node behind instead of replacing it.
-    var liveIds = (c.sections || []).map(function(s) { return s.id; });
-    document.querySelectorAll('.toc-section[data-injected]').forEach(function(sec) {
-      if (liveIds.indexOf(sec.id) === -1) {
-        var tocLink = tocLinkFor(sec.id);
-        if (tocLink) { tocLink.remove(); delete tocLinkById[sec.id]; }
-        delete nodeById[sec.id];
-        sec.remove();
-      }
+  function pruneUnclaimedSections(claimedIds) {
+    // Any .toc-section whose id nothing in the current content resolved to
+    // this pass is stale — not just ones we created ourselves. This also
+    // catches the original template's own elements: e.g. a section whose
+    // sourceId was lost at some point (older draft, or a bug since fixed)
+    // drifts its id away on every rename without ever being told to let go
+    // of the old anchor, leaving the previous real element behind as a
+    // permanent duplicate that keeps its last-known content forever.
+    document.querySelectorAll('.toc-section').forEach(function(sec) {
+      if (claimedIds[sec.id]) return;
+      var tocLink = tocLinkFor(sec.id);
+      if (tocLink) { tocLink.remove(); delete tocLinkById[sec.id]; }
+      delete nodeById[sec.id];
+      sec.remove();
     });
   }
   function createSection(s) {
@@ -162,7 +163,7 @@ function buildHtml(rawHtml, css, content) {
       if (h2 && c.title) h2.textContent = c.title;
       var summary = document.querySelector('.page-hero .summary');
       if (summary && c.intro) summary.textContent = c.intro;
-      pruneOrphanedInjectedSections(c);
+      var claimedIds = {};
       (c.sections || []).forEach(function(s) {
         try {
           // Look the element up by its original anchor (sourceId), since id
@@ -191,8 +192,22 @@ function buildHtml(rawHtml, css, content) {
                 tocLink.setAttribute('data-toc', s.id);
                 tocLink.setAttribute('href', '#' + s.id);
               }
+            } else {
+              // A section can exist with no matching nav link (e.g. lost by
+              // this same duplicate-id bug in an earlier commit) — backfill
+              // it instead of leaving the section absent from "On this page".
+              var tocNavFallback = document.querySelector('.toc-nav');
+              if (tocNavFallback) {
+                var newLink = document.createElement('a');
+                newLink.setAttribute('href', '#' + s.id);
+                newLink.setAttribute('data-toc', s.id);
+                newLink.textContent = s.heading || '';
+                tocNavFallback.appendChild(newLink);
+                tocLinkById[s.id] = newLink;
+              }
             }
           }
+          claimedIds[sec.id] = true;
           var refsList = sec.querySelector('.references-list');
           if (refsList) {
             var items = s.items || [];
@@ -210,6 +225,7 @@ function buildHtml(rawHtml, css, content) {
           console.error('[wiki-preview] failed to apply section', s && s.id, sectionErr);
         }
       });
+      pruneUnclaimedSections(claimedIds);
       var container = document.querySelector('.page-content .container');
       var tocNav = document.querySelector('.toc-nav');
       (c.sections || []).forEach(function(s) {

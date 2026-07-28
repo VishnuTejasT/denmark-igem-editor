@@ -119,6 +119,7 @@ async function generatePageHtml(pageName, content) {
     const p = doc.querySelector('.page-hero .summary');
     if (p) p.textContent = content.intro;
   }
+  const claimedIds = new Set();
   for (const s of content.sections || []) {
     // Look the element up by its original anchor (sourceId), since `id` may
     // have already drifted away from it to match a renamed heading.
@@ -140,8 +141,21 @@ async function generatePageHtml(pageName, content) {
           tocLink.setAttribute('data-toc', s.id);
           tocLink.setAttribute('href', `#${s.id}`);
         }
+      } else {
+        // A section can exist with no matching nav link (e.g. lost by this
+        // same duplicate-id bug in an earlier commit) — backfill it instead
+        // of leaving the section permanently absent from "On this page".
+        const tocNavFallback = doc.querySelector('.toc-nav');
+        if (tocNavFallback) {
+          const newLink = doc.createElement('a');
+          newLink.setAttribute('href', `#${s.id}`);
+          newLink.setAttribute('data-toc', s.id);
+          newLink.textContent = s.heading || '';
+          tocNavFallback.appendChild(newLink);
+        }
       }
     }
+    claimedIds.add(sec.id);
     // The References section is an <ol class="references-list"> whose
     // numbered-circle styling comes from a CSS counter on each <li> — so
     // every reference needs its own <li>, not one merged blob.
@@ -157,6 +171,19 @@ async function generatePageHtml(pageName, content) {
       }
     }
   }
+
+  // Any .toc-section nothing above resolved to is stale — not just ones we
+  // created ourselves. This also catches leftovers from the original
+  // template: e.g. a section whose sourceId was lost at some point (older
+  // draft, or a bug since fixed) drifts its id away on every rename without
+  // ever releasing the old anchor, leaving the previous real element behind
+  // as a permanent duplicate that keeps committing its last-known content.
+  doc.querySelectorAll('.toc-section').forEach(sec => {
+    if (claimedIds.has(sec.id)) return;
+    const tocLink = doc.querySelector(`.toc-nav a[data-toc="${sec.id}"]`);
+    if (tocLink) tocLink.remove();
+    sec.remove();
+  });
 
   // Reorder the actual DOM nodes (and their TOC links) to match the editor's
   // section order — appendChild on an existing node moves it, so iterating

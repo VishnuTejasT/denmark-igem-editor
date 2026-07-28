@@ -226,8 +226,15 @@ export default function EditorPage() {
           const parsed = JSON.parse(draft);
           const cleaned = {
             ...parsed,
+            // sourceId anchors a section to its real HTML element across
+            // heading renames. Drafts saved before that field existed (or
+            // that otherwise lost it) must get it defaulted here too, not
+            // just on a fresh GitLab fetch — otherwise every further rename
+            // in this draft loses track of the true anchor and orphans a
+            // new duplicate section instead of renaming in place.
             sections: dedupeSections(parsed.sections || []).map(s => ({
               ...s,
+              sourceId: s.sourceId || s.id,
               blocks: dedupeEmptySubsections(migrateSection(s)),
             })),
           };
