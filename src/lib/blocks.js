@@ -104,6 +104,7 @@ function collapsibleBlockHtml(b) {
 }
 
 export function blockToHtml(block) {
+  if (!block || typeof block !== 'object') return '';
   switch (block.type) {
     case 'text':
     case 'table':
@@ -151,6 +152,7 @@ export function sectionCardsHtml(blocks) {
   };
 
   for (const b of blocks || []) {
+    if (!b || typeof b !== 'object') continue;
     if (b.type === 'subsection' || b.standalone) {
       flushRun();
       const html = blockToHtml(b);
@@ -177,6 +179,7 @@ export function sectionBodyListItems(blocks) {
 }
 
 function blockHasContent(b) {
+  if (!b || typeof b !== 'object') return false;
   switch (b.type) {
     case 'text':
       return !!(b.markdown && b.markdown.trim() && b.markdown.trim() !== '--');
@@ -196,7 +199,11 @@ function blockHasContent(b) {
 }
 
 export function sectionIsFilled(section) {
-  return migrateSection(section).some(blockHasContent);
+  try {
+    return migrateSection(section).some(blockHasContent);
+  } catch {
+    return false;
+  }
 }
 
 // Collapse duplicate empty subsections (same heading, no content) down to one.
@@ -206,6 +213,7 @@ export function dedupeEmptySubsections(blocks) {
   const seenEmptyHeadings = new Set();
   const result = [];
   for (const b of blocks || []) {
+    if (!b || typeof b !== 'object') continue;
     if (b.type !== 'subsection') {
       result.push(b);
       continue;
@@ -247,9 +255,14 @@ export function dedupeSections(sections) {
 // Sections saved after the block-editor rewrite already carry `blocks` and
 // pass through untouched.
 export function migrateSection(section) {
-  if (Array.isArray(section.blocks) && section.blocks.every(b => typeof b.type === 'string')) {
+  // Defensive throughout: a single malformed section (null entry, a block
+  // without a type, a non-string body) used to throw here and, because this
+  // runs during render, take the whole editor down to a blank white page.
+  if (!section || typeof section !== 'object') return [];
+  if (Array.isArray(section.blocks) && section.blocks.every(b => b && typeof b.type === 'string')) {
     return section.blocks;
   }
-  const body = section.body ?? (section.blocks?.[0]?.body ?? '');
-  return body && body.trim() ? [{ id: newId(), type: 'text', markdown: body }] : [];
+  const raw = section.body ?? (Array.isArray(section.blocks) ? section.blocks[0]?.body : undefined) ?? '';
+  const body = typeof raw === 'string' ? raw : '';
+  return body.trim() ? [{ id: newId(), type: 'text', markdown: body }] : [];
 }

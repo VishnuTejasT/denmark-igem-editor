@@ -17,7 +17,7 @@ const BLOCK_LABELS = {
 function TextBlockEditor({ block, onChange }) {
   return (
     <MDEditor
-      value={block.markdown}
+      value={block.markdown ?? ''}
       onChange={val => onChange({ ...block, markdown: val ?? '' })}
       preview="edit"
       height={160}
@@ -34,7 +34,7 @@ function ImageBlockEditor({ block, onChange }) {
         <input
           style={{ ...formStyles.input, flex: 3 }}
           placeholder="iGEM upload URL  (https://static.igem.wiki/teams/…)"
-          value={block.url}
+          value={block.url ?? ''}
           onChange={e => onChange({ ...block, url: e.target.value })}
         />
         <select
@@ -48,10 +48,10 @@ function ImageBlockEditor({ block, onChange }) {
       <input
         style={{ ...formStyles.input, width: '100%' }}
         placeholder="Caption (optional)"
-        value={block.caption}
+        value={block.caption ?? ''}
         onChange={e => onChange({ ...block, caption: e.target.value })}
       />
-      {block.url.trim() && (
+      {(block.url || '').trim() && (
         <img src={block.url} alt="" style={formStyles.imagePreview} />
       )}
     </div>
@@ -124,7 +124,7 @@ function TableBlockEditor({ block, onChange }) {
       <textarea
         style={{ ...formStyles.input, width: '100%', fontFamily: 'monospace', resize: 'vertical', boxSizing: 'border-box' }}
         rows={5}
-        value={block.markdown}
+        value={block.markdown ?? ''}
         onChange={e => onChange({ ...block, markdown: e.target.value })}
       />
       <div style={formStyles.tableHint}>
@@ -147,7 +147,7 @@ function CollapsibleBlockEditor({ block, onChange }) {
       <input
         style={{ ...formStyles.input, width: '100%', marginBottom: 8 }}
         placeholder="Left column header (e.g. Feature) — optional"
-        value={block.heading}
+        value={block.heading ?? ''}
         onChange={e => onChange({ ...block, heading: e.target.value })}
       />
       {rows.map((row, i) => (
@@ -198,7 +198,7 @@ function SubsectionBlockEditor({ block, onChange, depth }) {
       <input
         style={styles.subsectionHeadingInput}
         placeholder="Subsection heading (e.g. Materials)"
-        value={block.heading}
+        value={block.heading ?? ''}
         onChange={e => onChange({ ...block, heading: e.target.value })}
       />
       <BlockList
@@ -246,7 +246,12 @@ function BlockItem({ block, onChange, onRemove, onMoveUp, onMoveDown, canMoveUp,
   );
 }
 
-function BlockList({ blocks, onChange, depth }) {
+function BlockList({ blocks: rawBlocks, onChange, depth }) {
+  // Drop anything that isn't a usable block object. A single null/garbage entry
+  // (from an older schema or a half-written draft) would otherwise throw during
+  // render and take the whole editor down to a blank page.
+  const blocks = (Array.isArray(rawBlocks) ? rawBlocks : []).filter(b => b && typeof b === 'object');
+
   const update = (i, newBlock) => onChange(blocks.map((b, idx) => idx === i ? newBlock : b));
   const remove = (i) => onChange(blocks.filter((_, idx) => idx !== i));
   const move = (i, dir) => {
@@ -263,7 +268,7 @@ function BlockList({ blocks, onChange, depth }) {
     <div style={depth > 0 ? styles.nestedBlockList : undefined}>
       {blocks.map((block, i) => (
         <BlockItem
-          key={block.id}
+          key={block.id || `block-${i}`}
           block={block}
           onChange={nb => update(i, nb)}
           onRemove={() => remove(i)}
@@ -309,7 +314,14 @@ function BlockList({ blocks, onChange, depth }) {
 
 // ─── main editor component ───────────────────────────────────────────────────
 
-export default function Editor({ content, onChange }) {
+export default function Editor({ content: rawContent, onChange }) {
+  // Same defensive filtering as BlockList: one malformed section must not be
+  // able to blank the entire editor.
+  const content = {
+    ...rawContent,
+    sections: (Array.isArray(rawContent?.sections) ? rawContent.sections : [])
+      .filter(s => s && typeof s === 'object'),
+  };
   const set = (key, value) => onChange({ ...content, [key]: value });
 
   const updateHeading = (id, heading) => {
@@ -408,7 +420,7 @@ export default function Editor({ content, onChange }) {
           <div style={styles.sectionHeader}>
             <input
               style={styles.sectionHeadingInput}
-              value={section.heading}
+              value={section.heading ?? ''}
               onChange={e => updateHeading(section.id, e.target.value)}
               onBlur={() => resyncSectionId(section.id)}
               placeholder="Section name"

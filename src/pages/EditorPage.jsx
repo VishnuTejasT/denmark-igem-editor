@@ -12,7 +12,7 @@ const EMPTY = { title: '', intro: '', sections: [] };
 
 function computePageStatus(content) {
   if (!content) return { status: 'unknown', filled: 0, total: 0 };
-  const sections = content.sections || [];
+  const sections = Array.isArray(content.sections) ? content.sections : [];
   const filled = sections.filter(s => sectionIsFilled(s)).length;
   const total = sections.length;
   const hasTitle = !!(content.title?.trim() && content.title !== '--');
@@ -231,7 +231,22 @@ export default function EditorPage() {
         const { content: fetched, lastCommitId: cid } = jsonResult.value;
         const draft = sessionStorage.getItem(`wiki_draft_${pageName}`);
         if (draft) {
-          const parsed = JSON.parse(draft);
+          // A corrupted draft must never be fatal: fall back to the committed
+          // content rather than letting a parse/shape error blank the editor.
+          let parsed = null;
+          try {
+            const candidate = JSON.parse(draft);
+            if (candidate && Array.isArray(candidate.sections)) parsed = candidate;
+          } catch (parseErr) {
+            console.error('[wiki-editor] discarding unreadable draft', parseErr);
+          }
+          if (!parsed) {
+            sessionStorage.removeItem(`wiki_draft_${pageName}`);
+            setContent(normalizeContent(fetched, sections));
+            setLastCommitId(cid);
+            lastCommitIdRef.current = cid;
+            return;
+          }
           const cleaned = {
             ...parsed,
             // sourceId anchors a section to its real HTML element across
