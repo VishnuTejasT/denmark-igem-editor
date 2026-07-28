@@ -51,8 +51,16 @@ function normalizeContent(content, htmlSections) {
   // "move section"). Any section present in the HTML template but not yet in
   // the saved JSON (e.g. added to the page template since the last commit)
   // gets appended at the end.
-  const savedIds = dedupeSections(content.sections || []).map(s => s.id);
-  const extraHtmlIds = htmlSections.map(s => s.id).filter(id => !savedIds.includes(id));
+  // A saved section claims its HTML anchor by *either* id or sourceId. Checking
+  // only `id` meant that as soon as a heading was renamed (id drifts, sourceId
+  // stays pinned to the real anchor) the template's original element looked
+  // unclaimed — so it got re-appended as a brand-new phantom section on every
+  // load, and the phantom got committed back into the HTML, resurrecting itself
+  // forever. Honor sourceId here so a renamed section still owns its anchor.
+  const deduped = dedupeSections(content.sections || []);
+  const savedIds = deduped.map(s => s.id);
+  const claimedHtmlIds = new Set(deduped.flatMap(s => [s.id, s.sourceId].filter(Boolean)));
+  const extraHtmlIds = htmlSections.map(s => s.id).filter(id => !claimedHtmlIds.has(id));
   const orderedIds = [...savedIds, ...extraHtmlIds];
 
   const sections = orderedIds.map(id => ({

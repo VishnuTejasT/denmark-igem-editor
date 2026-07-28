@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
-import { emptyBlock, SIZE_MAP, defaultTableMarkdown, uniqueSectionId } from '../lib/blocks';
+import { emptyBlock, SIZE_MAP, defaultTableMarkdown, uniqueSectionId, sectionIsFilled } from '../lib/blocks';
 
 const BLOCK_LABELS = {
   text: 'Text',
@@ -415,11 +415,21 @@ export default function Editor({ content, onChange }) {
               onClick={() => moveSection(section.id, 1)}
               title="Move section down"
             >↓</button>
-            {section.isNew && (
-              <button style={styles.removeBtn} onClick={() => removeSection(section.id)}>
-                ✕ Remove section
-              </button>
-            )}
+            {/* Removable regardless of isNew: sections that came from the page
+                template also need to be deletable, both to drop a section for
+                real and to clear stale/phantom ones. Confirm first when the
+                section actually has content, since this is destructive. */}
+            <button
+              style={styles.removeBtn}
+              title="Remove this section"
+              onClick={() => {
+                const filled = (section.blocks || []).length > 0 && sectionIsFilled(section);
+                if (filled && !window.confirm(`Delete the "${section.heading}" section and its content?`)) return;
+                removeSection(section.id);
+              }}
+            >
+              ✕ Remove section
+            </button>
           </div>
 
           <BlockList
