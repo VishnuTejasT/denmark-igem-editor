@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI || 'https://project-qznrm.vercel.app/callback';
+const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI || 'https://dhs-editor.pro/callback';
 
 export default function CallbackPage() {
   const navigate = useNavigate();
