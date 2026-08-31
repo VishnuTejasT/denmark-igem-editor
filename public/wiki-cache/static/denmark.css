@@ -44,7 +44,7 @@
 
   /* Alias */
   --accent: var(--brand);
-  --font-heading: 'Fredoka One', cursive;
+  --font-heading: 'Fredoka One', ;
   --font-body:    "Segoe One", system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
   --font-ui:      'Varela Round', system-ui, sans-serif;
   --font-mono:    'Space Mono', 'Courier New', monospace;
