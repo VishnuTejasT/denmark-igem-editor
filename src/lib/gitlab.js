@@ -13,6 +13,14 @@ function htmlPath(pageName) {
   return `wiki/pages/${pageName}.html`;
 }
 
+// atob() decodes base64 into a raw binary string (one JS char per byte), which
+// mangles any multi-byte UTF-8 character (≥, ×, →, ...). Decode the bytes as
+// UTF-8 explicitly so special characters survive the round trip.
+function decodeBase64Utf8(b64) {
+  const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
 const pageCache = new Map();
 
 export async function fetchPage(token, pageName) {
@@ -39,7 +47,7 @@ export async function fetchPage(token, pageName) {
 
   const data = await res.json();
   const result = {
-    content: JSON.parse(atob(data.content)),
+    content: JSON.parse(decodeBase64Utf8(data.content)),
     lastCommitId: data.last_commit_id,
   };
   pageCache.set(pageName, result);
@@ -214,7 +222,7 @@ export async function fetchPageMeta(token, pageName) {
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
   if (!res.ok) return null;
   const data = await res.json();
-  return { lastCommitId: data.last_commit_id, content: JSON.parse(atob(data.content)) };
+  return { lastCommitId: data.last_commit_id, content: JSON.parse(decodeBase64Utf8(data.content)) };
 }
 
 export async function fetchCommitInfo(token, commitId) {
