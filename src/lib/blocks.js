@@ -135,11 +135,17 @@ export function sectionBodyHtml(blocks) {
 
 // Split a section's blocks into one or more `.section-block` cards.
 //
-// A subsection is always its own card (it carries its own label pill), and any
-// block flagged `standalone` breaks out into its own card too. Everything else
-// accumulates into a shared card with its neighbours, so consecutive ordinary
-// blocks keep reading as one continuous piece of prose. Cards stack with the
-// spacing from `.section-block + .section-block` in the stylesheet.
+// A subsection is always its own card (it carries its own label pill) and
+// nothing before or after it can share its card. Everything else accumulates
+// into a shared run with its neighbours, so consecutive ordinary blocks keep
+// reading as one continuous piece of prose — until a block flagged
+// `standalone` ("Own card" in the editor) starts a fresh run. That flag only
+// pinches off the *previous* run; it does not wall the block off from what
+// comes after, so a non-standalone block (e.g. an image) placed right after
+// a standalone one still joins it in the same card — matching the "Own
+// card" toggle's own tooltip ("click to merge it into the card above").
+// Cards stack with the spacing from `.section-block + .section-block` in
+// the stylesheet.
 export function sectionCardsHtml(blocks) {
   const cards = [];
   let run = [];
@@ -153,15 +159,14 @@ export function sectionCardsHtml(blocks) {
 
   for (const b of blocks || []) {
     if (!b || typeof b !== 'object') continue;
-    if (b.type === 'subsection' || b.standalone) {
+    if (b.type === 'subsection') {
       flushRun();
       const html = blockToHtml(b);
-      if (!html || !html.trim()) continue;
-      // A subsection already renders as a full card; anything else needs wrapping.
-      cards.push(b.type === 'subsection' ? html : `<div class="section-block">\n${html}\n</div>`);
-    } else {
-      run.push(b);
+      if (html && html.trim()) cards.push(html);
+      continue;
     }
+    if (b.standalone) flushRun();
+    run.push(b);
   }
   flushRun();
 
