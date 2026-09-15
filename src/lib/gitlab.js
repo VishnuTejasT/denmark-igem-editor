@@ -162,9 +162,16 @@ async function generatePageHtml(token, pageName, content) {
   const claimedIds = new Set();
   for (const s of content.sections || []) {
     // Look the element up by its original anchor (sourceId), since `id` may
-    // have already drifted away from it to match a renamed heading.
+    // have already drifted away from it to match a renamed heading. Also try
+    // `s.id` directly: sourceId can go stale (e.g. left over from before the
+    // page's own template was regenerated/restored under this same id, or
+    // never corrected after an earlier bug), and without this fallback a
+    // stale-but-non-empty sourceId resolves to nothing, silently creating a
+    // brand-new duplicate section on every single commit forever — the
+    // preview iframe's own copy of this lookup (byId(lookupId) || byId(s.id)
+    // in Preview.jsx) already does this; the commit path must match it.
     const lookupId = s.sourceId || s.id;
-    let sec = doc.querySelector(`.toc-section#${lookupId}`);
+    let sec = doc.querySelector(`.toc-section#${lookupId}`) || doc.querySelector(`.toc-section#${s.id}`);
     if (!sec) {
       sec = createSectionElement(doc, s);
       if (!sec) continue;
@@ -172,9 +179,27 @@ async function generatePageHtml(token, pageName, content) {
       if (sec.id !== s.id) sec.id = s.id;
       if (s.heading) {
         const h3 = sec.querySelector('h3');
-        if (h3) h3.textContent = s.heading;
+        // A styled section heading wraps its number badge in its own
+        // <span class="chapter-number"> next to a second span holding the
+        // text — h3.textContent = s.heading would replace *all* of that,
+        // silently deleting the number badge from an existing section on
+        // every single commit, whether or not the heading text even changed.
+        // Only touch the text-holding span; leave the badge alone.
+        if (h3) {
+          const numberSpan = h3.querySelector('.chapter-number');
+          if (numberSpan) {
+            let textSpan = h3.querySelector('span:not(.chapter-number)');
+            if (!textSpan) {
+              textSpan = doc.createElement('span');
+              h3.appendChild(textSpan);
+            }
+            textSpan.textContent = s.heading;
+          } else {
+            h3.textContent = s.heading;
+          }
+        }
       }
-      const tocLink = doc.querySelector(`.toc-nav a[data-toc="${lookupId}"]`);
+      const tocLink = doc.querySelector(`.toc-nav a[data-toc="${s.id}"]`) || doc.querySelector(`.toc-nav a[data-toc="${lookupId}"]`);
       if (tocLink) {
         if (s.heading) tocLink.textContent = s.heading;
         if (tocLink.getAttribute('data-toc') !== s.id) {

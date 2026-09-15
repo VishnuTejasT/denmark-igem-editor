@@ -192,7 +192,23 @@ export function buildHtml(rawHtml, content) {
             }
             if (s.heading) {
               var h3 = sec.querySelector('h3');
-              if (h3) h3.textContent = s.heading;
+              // Keep in sync with the same fix in gitlab.js generatePageHtml:
+              // a styled heading's number badge lives in its own
+              // span.chapter-number next to a second span holding the text;
+              // h3.textContent = s.heading would wipe the badge out too.
+              if (h3) {
+                var numberSpan = h3.querySelector('.chapter-number');
+                if (numberSpan) {
+                  var textSpan = h3.querySelector('span:not(.chapter-number)');
+                  if (!textSpan) {
+                    textSpan = document.createElement('span');
+                    h3.appendChild(textSpan);
+                  }
+                  textSpan.textContent = s.heading;
+                } else {
+                  h3.textContent = s.heading;
+                }
+              }
             }
             var tocLink = tocLinkFor(s.id) || tocLinkFor(lookupId);
             if (tocLink) {
