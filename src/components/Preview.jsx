@@ -2,8 +2,23 @@ import { useEffect, useRef, useState } from 'react';
 import { sectionBodyBlocksHtml, sectionCardsHtml } from '../lib/blocks';
 import { fetchFile } from '../lib/gitlab';
 
-const STATIC_RAW_BASE =
-  `https://gitlab.igem.org/${import.meta.env.VITE_GITLAB_REPO_PATH || 'vishnutejast/denmarkwiki'}/-/raw/${import.meta.env.VITE_GITLAB_BRANCH || 'main'}/`;
+const REPO_PATH = import.meta.env.VITE_GITLAB_REPO_PATH || 'vishnutejast/denmarkwiki';
+const [WIKI_YEAR, WIKI_TEAM] = REPO_PATH.split('/');
+
+// Static assets (CSS, fonts, illustrations) must come from the *published*
+// wiki, not GitLab's raw file API: GitLab serves raw .css/.woff2/.svg files
+// as text/plain or application/octet-stream with X-Content-Type-Options:
+// nosniff and no CORS headers, so browsers silently refuse to apply them as
+// a stylesheet/font/<link> resource — a page can look completely unstyled
+// in preview even though the file content itself loaded fine over HTTP. The
+// published site serves correct content-types (text/css, font/woff2,
+// image/svg+xml) and CORS, so asset <link>/<img> references get rewritten
+// to point there instead. This never touches page HTML or JSON content
+// (still fetched live via the GitLab API, see gitlab.js), only the mostly-
+// static CSS/font/image files pages reference by relative "static/..." path.
+const STATIC_BASE = import.meta.env.VITE_WIKI_PUBLISHED_BASE
+  || (WIKI_YEAR && WIKI_TEAM ? `https://${WIKI_YEAR}.igem.wiki/${WIKI_TEAM}/` : null)
+  || `https://gitlab.igem.org/${REPO_PATH}/-/raw/${import.meta.env.VITE_GITLAB_BRANCH || 'main'}/`;
 
 // Pre-render all Markdown body fields to HTML before injecting into the iframe.
 function renderContent(content) {
@@ -23,16 +38,15 @@ function renderContent(content) {
 
 function rewriteAssetUrls(html) {
   return html
-    .replace(/(src|href)="static\//g, `$1="${STATIC_RAW_BASE}static/`)
-    .replace(/(src|href)='static\//g, `$1='${STATIC_RAW_BASE}static/`);
+    .replace(/(src|href)="static\//g, `$1="${STATIC_BASE}static/`)
+    .replace(/(src|href)='static\//g, `$1='${STATIC_BASE}static/`);
 }
 
-export function buildHtml(rawHtml, css, content) {
+export function buildHtml(rawHtml, content) {
   let html = rewriteAssetUrls(rawHtml);
   html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
 
   const cspMeta = `<meta http-equiv="Content-Security-Policy" content="script-src 'unsafe-inline' 'unsafe-eval' blob:;">`;
-  const injectedStyle = css ? `<style>${css}</style>` : '';
   const contentJson = JSON.stringify(renderContent(content) || {}).replace(/<\/script/gi, '<\\/script');
 
   const injectedScript = `<script>
@@ -268,9 +282,9 @@ export function buildHtml(rawHtml, css, content) {
     html = html.replace('<head>', '<head>' + cspMeta);
   }
   if (html.includes('</head>')) {
-    html = html.replace('</head>', injectedStyle + injectedScript + '</head>');
+    html = html.replace('</head>', injectedScript + '</head>');
   } else {
-    html = cspMeta + injectedStyle + injectedScript + html;
+    html = cspMeta + injectedScript + html;
   }
 
   return html;
@@ -280,41 +294,33 @@ export default function Preview({ selectedPage, content, token }) {
   const iframeRef = useRef(null);
   const iframeLoadedRef = useRef(false);
   const [rawHtml, setRawHtml] = useState(null);
-  const [css, setCss] = useState('');
   const [fetchError, setFetchError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!selectedPage) {
       setRawHtml(null);
-      setCss('');
       setFetchError(null);
       return;
     }
     setLoading(true);
     setFetchError(null);
 
-    Promise.all([
-      fetchFile(token, `wiki/pages/${selectedPage}.html`),
-      fetchFile(token, 'static/style.css').catch(() => ''),
-      fetchFile(token, 'static/denmark.css').catch(() => ''),
-      fetchFile(token, 'static/section-blocks.css').catch(() => ''),
-    ])
-      .then(([html, style, denmark, sectionBlocks]) => {
-        setRawHtml(html);
-        setCss([style, denmark, sectionBlocks].filter(Boolean).join('\n'));
-      })
+    fetchFile(token, `wiki/pages/${selectedPage}.html`)
+      .then(setRawHtml)
       .catch(err => setFetchError(err.message))
       .finally(() => setLoading(false));
   }, [selectedPage, token]);
 
-  // Rebuild iframe when page template or CSS changes
+  // Rebuild iframe when the page template changes. Its own <link
+  // rel="stylesheet"> tags (rewritten to STATIC_BASE above) load the actual
+  // CSS — including wiki-pages.css — directly in the iframe.
   useEffect(() => {
     if (!rawHtml) return;
     iframeLoadedRef.current = false;
     const iframe = iframeRef.current;
-    if (iframe) iframe.srcdoc = buildHtml(rawHtml, css, content);
-  }, [rawHtml, css]);
+    if (iframe) iframe.srcdoc = buildHtml(rawHtml, content);
+  }, [rawHtml]);
 
   // Push content updates without reloading the iframe
   useEffect(() => {
