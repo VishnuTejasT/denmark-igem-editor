@@ -1,10 +1,9 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Wet Lab Experiments — Denmark-GA iGEM 2025</title>
-    <base href="../" />
+    <base href="../">
     <script>
       (function () {
         var stored = localStorage.getItem('theme');
@@ -12,73 +11,76 @@
         if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
       })();
     </script>
-    <link rel="stylesheet" href="static/style.css" />
-    <link rel="stylesheet" href="static/denmark.css" />
-    <link rel="stylesheet" href="static/section-blocks.css" />
+    <link rel="stylesheet" href="static/style.css">
+    <link rel="stylesheet" href="static/denmark.css">
+    <link rel="stylesheet" href="static/section-blocks.css">
+    <link rel="stylesheet" href="static/wiki-pages.css?v=792dfe22e192">
   </head>
-  <body>
+  <body class="wiki-interior" data-page-family="lab">
     <div id="scroll-progress"></div>
     <div id="nav"></div>
 
+
+    <main>
+      <div class="page-hero">
+        <div class="container"><div class="chapter-intro">
+          <h1>Wet Lab</h1>
+          <p class="summary draft-summary">--</p>
+        </div></div>
+      </div>
+
+      <div class="wiki-reading-layout">
     <aside class="toc-sidebar" aria-label="Table of contents">
       <div class="toc-handle" aria-hidden="true">Table of Contents</div>
       <nav class="toc-nav" id="toc-links" aria-label="Page sections">
         <p class="toc-nav-heading">On this page</p>
-        <a href="#overview"   data-toc="overview">Overview</a>
-        <a href="#lockr"      data-toc="lockr">LOCKR Validation</a>
-        <a href="#binder"     data-toc="binder">New Binder Validation</a>
-        <a href="#luciferase" data-toc="luciferase">Luciferase / Assay Work</a>
-        <a href="#references" data-toc="references">References</a>
-      </nav>
+        
+        
+        
+        
+        
+      <a href="#existing-lockr-expression" data-toc="existing-lockr-expression">Existing LOCKR Expression</a><a href="#modified-binder-expression" data-toc="modified-binder-expression">Modified Binder Expression</a><a href="#luciferace-assay-work" data-toc="luciferace-assay-work">Luciferace / Assay Work</a><a href="#spr-data-2" data-toc="spr-data-2">SPR Data</a><a href="#references-2" data-toc="references-2">References</a><a href="pages/wetlab.html#overview" data-toc="overview">Overview</a><a href="pages/wetlab.html#existing-lockr-expression" data-toc="existing-lockr-expression">Existing LOCKR Expression</a><a href="pages/wetlab.html#modified-binder-expression" data-toc="modified-binder-expression">Modified Binder Expression</a><a href="pages/wetlab.html#luciferace-assay-work" data-toc="luciferace-assay-work">Luciferace / Assay Work</a><a href="pages/wetlab.html#spr-data-2" data-toc="spr-data-2">SPR Data</a><a href="pages/wetlab.html#references-2" data-toc="references-2">References</a></nav>
     </aside>
-
-    <main>
-      <div class="page-hero">
-        <div class="container">
-          <h2>Wet Lab Experiments</h2>
-          <p class="summary">--</p>
-        </div>
-      </div>
 
       <div class="page-content">
         <div class="container">
 
-          <section class="wiki-section toc-section" id="overview">
+          
+          </section><section class="wiki-section toc-section" id="overview">
             <h3>Overview</h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
+            
+          <div class="section-block">
+<p>Our wet-lab works to test whether LATTE’s charge-optimization system meaningfully improves the function of our de-novo derived PfLDH-binding protein when it is integrated as LOCKR’s sensing domain in the LOCKR switch. Our de-novo binders were derived from a pipeline of RFDiffusion, ProteinMPNN, and AlphaFold, and we tested for target affinity using our own software, HybriDock-Pe. Then, LATTE runs a liability and charge scan to modify this binder, creating a charge-optimized version that reduces the electrostatic interference with cage-key thermodynamics. </p>
+<p>We are expressing three different constructs which isolate the effect of the charge-optimization and the tandem avidity, which is the combined binding strength of the two tandem binders. Our constructs include a cage with the original binder, a cage with the charge-optimized binder, and a tandem cage with two charge-optimized binders that are linked by a glycerin linker. The first pair isolates the effect of charge optimization while the second pair isolates the effect of tandem avidity. Here, we are using malaria as our proof-of-concept validator, with PfLDH, the malarial target and binders optimized for that target specifically.</p>
+<p>Before testing our constructs, we will express the published LOCKR system ourselves, with IgG1-Fc as our target, to ensure that our workflow of expression, purification, and luminescence measurement is successful. Thus, we can attribute the differences between the experiments to the shifting experimental variables rather than a mishap in our experimental design.</p>
 
-          <section class="wiki-section toc-section" id="lockr">
-            <h3>LOCKR Validation</h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
+</div></section><section class="wiki-section toc-section" id="existing-lockr-expression">
+            <h3><span class="chapter-number" aria-hidden="true">02</span><span>Existing LOCKR Expression</span></h3>
+            
+          <div class="section-block">
+<p>--</p>
 
-          <section class="wiki-section toc-section" id="binder">
-            <h3>New Binder Validation</h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
+</div></section><section class="wiki-section toc-section" id="modified-binder-expression">
+            <h3><span class="chapter-number" aria-hidden="true">03</span><span>Modified Binder Expression</span></h3>
+            
+          <div class="section-block">
+<p>binder v1</p>
 
-          <section class="wiki-section toc-section" id="luciferase">
-            <h3>Luciferase / Assay Work</h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
+</div><div class="section-block">
+<p>binder v2</p>
 
-          <section class="wiki-section toc-section" id="references">
-            <h3>References</h3>
-            <ol class="references-list">
-              <li class="section-block">--</li>
-            </ol>
-          </section>
+</div></section><section class="wiki-section toc-section" id="luciferace-assay-work">
+            <h3><span class="chapter-number" aria-hidden="true">04</span><span>Luciferace / Assay Work</span></h3>
+            
+          <div class="section-block">
+<p>--</p>
 
-        </div>
+</div></section><section class="wiki-section toc-section" id="spr-data-2">
+            <h3><span class="chapter-number" aria-hidden="true">05</span><span>SPR Data</span></h3>
+            <ol class="references-list"><li class="section-block"><p>--</p>
+</li></ol>
+          </section><section class="wiki-section toc-section" id="references-2"><h3><span class="chapter-number" aria-hidden="true">06</span><span>References</span></h3><div class="section-block"></div></section></div>
+      </div>
       </div>
     </main>
 
@@ -86,7 +88,7 @@
     <button id="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false" title="Toggle dark mode">
       <span id="theme-toggle-icon" aria-hidden="true"></span>
     </button>
-    <a id="back-to-top" href="#" aria-label="Back to top">&#8679;</a>
+    <a id="back-to-top" href="#" aria-label="Back to top">⇧</a>
     <script src="static/cursor.js"></script>
     <script>
       (function () {
@@ -116,10 +118,9 @@
       })();
     </script>
     <script src="static/include.js"></script>
-    <script src="static/toc-hover.js"></script>
-    <script src="static/toc-watcher.js"></script>
-    <script src="static/content-loader.js"></script>
-      <script src="static/toc-drag.js"></script>
+    <script src="static/wiki-toc.js?v=4f67627731d9"></script>
       <script src="static/carousel.js"></script>
-  </body>
-</html>
+  
+
+
+</body></html>

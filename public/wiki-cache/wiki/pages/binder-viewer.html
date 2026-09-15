@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Safety — Denmark-GA iGEM 2025</title>
+    <title>Binder Viewer — Denmark-GA iGEM 2025</title>
     <base href="../" />
     <script>
       (function () {
@@ -17,74 +17,42 @@
     <link rel="preload" href="https://static.igem.wiki/teams/6112/wiki/betterfonts/varelaround-regular.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="static/denmark.css" />
     <link rel="stylesheet" href="static/section-blocks.css" />
+    <link rel="stylesheet" href="static/molstar/molstar.css" />
+    <link rel="stylesheet" href="static/binder-viewer.css" />
     <link rel="stylesheet" href="static/wiki-pages.css?v=d1ad75dc95bf">
   </head>
-  <body class="wiki-interior" data-page-family="lab">
+  <body class="wiki-interior" data-page-family="research">
     <div id="scroll-progress"></div>
     <div id="nav"></div>
-
 
     <main>
       <div class="page-hero">
         <div class="container"><div class="chapter-intro">
-          <h1>Safety</h1>
+          <h1>Binder Viewer</h1>
           <p class="summary draft-summary">--</p>
         </div></div>
       </div>
 
-      <div class="wiki-reading-layout">
-    <aside class="toc-sidebar" aria-label="Table of contents">
-      <div class="toc-handle" aria-hidden="true">Table of Contents</div>
-      <nav class="toc-nav" id="toc-links" aria-label="Page sections">
-        <p class="toc-nav-heading">On this page</p>
-        <a href="pages/safety.html#overview"    data-toc="overview">Overview</a>
-        <a href="pages/safety.html#design"      data-toc="design">Safe Project Design</a>
-        <a href="pages/safety.html#lab-safety"  data-toc="lab-safety">Lab Safety</a>
-        <a href="pages/safety.html#biosecurity" data-toc="biosecurity">Biosecurity</a>
-        <a href="pages/safety.html#references"  data-toc="references">References</a>
-      </nav>
-    </aside>
-
       <div class="page-content">
-        <div class="container">
+        <div class="container binder-page-container">
 
-          <section class="wiki-section toc-section" id="overview">
-            <h3><span class="chapter-number" aria-hidden="true">01</span><span>Overview</span></h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
+          <section class="wiki-section" id="viewer">
+            <h3><span class="chapter-number" aria-hidden="true">01</span><span>Interactive Structure Viewer</span></h3>
+            <div class="binder-viewer-layout">
+              <div class="binder-sidebar section-block">
+                <span class="section-block-label">Structures</span>
+                <div id="binder-tabs" class="binder-tabs"></div>
+                <div id="binder-list" class="binder-list"></div>
+                <p id="binder-empty" class="binder-empty-msg" hidden>No structures have been added yet — check back soon.</p>
+              </div>
+              <div class="binder-main">
+                <div id="binder-molstar-app" class="binder-molstar-card"></div>
+                <div id="binder-detail" class="section-block"></div>
+              </div>
             </div>
-          </section>
-
-          <section class="wiki-section toc-section" id="design">
-            <h3><span class="chapter-number" aria-hidden="true">02</span><span>Safe Project Design</span></h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
-
-          <section class="wiki-section toc-section" id="lab-safety">
-            <h3><span class="chapter-number" aria-hidden="true">03</span><span>Lab Safety</span></h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
-
-          <section class="wiki-section toc-section" id="biosecurity">
-            <h3><span class="chapter-number" aria-hidden="true">04</span><span>Biosecurity Considerations</span></h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
-
-          <section class="wiki-section toc-section" id="references">
-            <h3><span class="chapter-number" aria-hidden="true">05</span><span>References</span></h3>
-            <ol class="references-list">
-              <li class="section-block">--</li>
-            </ol>
           </section>
 
         </div>
-      </div>
       </div>
     </main>
 
@@ -122,7 +90,8 @@
       })();
     </script>
     <script src="static/include.js"></script>
-    <script src="static/wiki-toc.js?v=022a3252fdb1"></script>
-      <script src="static/carousel.js"></script>
+    
+    <script src="static/molstar/molstar.js"></script>
+    <script src="static/binder-viewer.js"></script>
   </body>
 </html>

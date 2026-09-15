@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchPage, commitPage, fetchPageMeta, fetchCommitInfo } from '../lib/gitlab';
+import { fetchPage, fetchPageHtml, fetchPageList, commitPage, fetchPageMeta, fetchCommitInfo } from '../lib/gitlab';
 import { parseSectionsFromHtml } from '../lib/htmlParser';
 import { migrateSection, sectionIsFilled, uniqueSectionId, dedupeEmptySubsections, dedupeSections } from '../lib/blocks';
 import Editor from '../components/Editor';
@@ -92,11 +92,10 @@ function normalizeContent(content, htmlSections) {
   };
 }
 
-async function fetchHtmlSections(pageName) {
+async function fetchHtmlSections(token, pageName) {
   try {
-    const res = await fetch(`/wiki-cache/wiki/pages/${pageName}.html`);
-    if (!res.ok) return [];
-    return parseSectionsFromHtml(await res.text());
+    const html = await fetchPageHtml(token, pageName);
+    return parseSectionsFromHtml(html);
   } catch {
     return [];
   }
@@ -134,16 +133,21 @@ export default function EditorPage() {
       .then(d => setUsername(d.username || d.name || ''))
       .catch(() => {});
 
-    // Load page list from the build-time manifest, then kick off status loading
-    fetch('/wiki-cache/pages-manifest.json')
-      .then(r => r.json())
+    // Load the live page list from GitLab (falls back to the build-time
+    // manifest only if that call fails, e.g. transient network error).
+    fetchPageList(token)
       .then(list => {
         setPages(list);
         loadAllStatuses(token, list);
       })
       .catch(() => {
-        // Manifest missing (local dev without a build) — fall back to empty list
-        setPages([]);
+        fetch('/wiki-cache/pages-manifest.json')
+          .then(r => r.json())
+          .then(list => {
+            setPages(list);
+            loadAllStatuses(token, list);
+          })
+          .catch(() => setPages([]));
       });
   }, [token]);
 
@@ -213,7 +217,7 @@ export default function EditorPage() {
     try {
       const [jsonResult, htmlSections] = await Promise.allSettled([
         fetchPage(token, pageName),
-        fetchHtmlSections(pageName),
+        fetchHtmlSections(token, pageName),
       ]);
 
       const sections = htmlSections.status === 'fulfilled' ? htmlSections.value : [];
@@ -451,7 +455,7 @@ export default function EditorPage() {
 
         {/* Preview pane */}
         <div style={styles.previewPane}>
-          <Preview selectedPage={selectedPage} content={content} />
+          <Preview selectedPage={selectedPage} content={content} token={token} />
         </div>
       </div>
     </div>

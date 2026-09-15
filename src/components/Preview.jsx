@@ -1,15 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { sectionBodyBlocksHtml, sectionCardsHtml } from '../lib/blocks';
+import { fetchFile } from '../lib/gitlab';
 
 const STATIC_RAW_BASE =
   `https://gitlab.igem.org/${import.meta.env.VITE_GITLAB_REPO_PATH || 'vishnutejast/denmarkwiki'}/-/raw/${import.meta.env.VITE_GITLAB_BRANCH || 'main'}/`;
-
-async function fetchRaw(path) {
-  const url = `/wiki-cache/${path}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`${res.status} fetching ${path}`);
-  return res.text();
-}
 
 // Pre-render all Markdown body fields to HTML before injecting into the iframe.
 function renderContent(content) {
@@ -282,7 +276,7 @@ export function buildHtml(rawHtml, css, content) {
   return html;
 }
 
-export default function Preview({ selectedPage, content }) {
+export default function Preview({ selectedPage, content, token }) {
   const iframeRef = useRef(null);
   const iframeLoadedRef = useRef(false);
   const [rawHtml, setRawHtml] = useState(null);
@@ -301,10 +295,10 @@ export default function Preview({ selectedPage, content }) {
     setFetchError(null);
 
     Promise.all([
-      fetchRaw(`wiki/pages/${selectedPage}.html`),
-      fetchRaw('static/style.css').catch(() => ''),
-      fetchRaw('static/denmark.css').catch(() => ''),
-      fetchRaw('static/section-blocks.css').catch(() => ''),
+      fetchFile(token, `wiki/pages/${selectedPage}.html`),
+      fetchFile(token, 'static/style.css').catch(() => ''),
+      fetchFile(token, 'static/denmark.css').catch(() => ''),
+      fetchFile(token, 'static/section-blocks.css').catch(() => ''),
     ])
       .then(([html, style, denmark, sectionBlocks]) => {
         setRawHtml(html);
@@ -312,7 +306,7 @@ export default function Preview({ selectedPage, content }) {
       })
       .catch(err => setFetchError(err.message))
       .finally(() => setLoading(false));
-  }, [selectedPage]);
+  }, [selectedPage, token]);
 
   // Rebuild iframe when page template or CSS changes
   useEffect(() => {

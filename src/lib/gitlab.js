@@ -23,10 +23,17 @@ function decodeBase64Utf8(b64) {
 
 const pageCache = new Map();
 
-export async function fetchPage(token, pageName) {
-  if (pageCache.has(pageName)) return pageCache.get(pageName);
-
-  const encoded = encodeURIComponent(jsonPath(pageName));
+// Fetch a repo file's current content straight from GitLab — this is always
+// whatever is actually on `main` right now, never a snapshot baked in at the
+// editor's last build/deploy. Every consumer that needs to know what a wiki
+// page's HTML looks like MUST go through this (or fetchPageHtml below), not
+// the /wiki-cache/ bundle: that bundle is only refreshed when someone runs
+// `npm run build` for this app, so any structural change made to wiki/pages
+// after that (a redesign, new CSS, a new TOC layout) is invisible to it until
+// the next deploy — and every commit made through the editor in the meantime
+// silently reverts the live page back to the stale template.
+async function fetchFileRaw(token, filePath) {
+  const encoded = encodeURIComponent(filePath);
   const url = `${BASE}/projects/${PROJECT_ID}/repository/files/${encoded}?ref=${encodeURIComponent(BRANCH)}`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
 
@@ -37,21 +44,46 @@ export async function fetchPage(token, pageName) {
       throw e;
     }
     if (res.status === 404) {
-      const e = new Error(`No saved content yet for "${pageName}".`);
+      const e = new Error(`Not found: "${filePath}".`);
       e.code = 'NOT_FOUND';
       throw e;
     }
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `GitLab error ${res.status} loading "${pageName}".`);
+    throw new Error(err.message || `GitLab error ${res.status} loading "${filePath}".`);
   }
 
   const data = await res.json();
-  const result = {
-    content: JSON.parse(decodeBase64Utf8(data.content)),
-    lastCommitId: data.last_commit_id,
-  };
+  return { content: decodeBase64Utf8(data.content), lastCommitId: data.last_commit_id };
+}
+
+export async function fetchPage(token, pageName) {
+  if (pageCache.has(pageName)) return pageCache.get(pageName);
+
+  const { content, lastCommitId } = await fetchFileRaw(token, jsonPath(pageName)).catch(e => {
+    if (e.code === 'NOT_FOUND') {
+      const e2 = new Error(`No saved content yet for "${pageName}".`);
+      e2.code = 'NOT_FOUND';
+      throw e2;
+    }
+    throw e;
+  });
+
+  const result = { content: JSON.parse(content), lastCommitId };
   pageCache.set(pageName, result);
   return result;
+}
+
+// Live HTML template for a wiki page — see fetchFileRaw's note above on why
+// this must never be replaced with a fetch to /wiki-cache/.
+export async function fetchPageHtml(token, pageName) {
+  const { content } = await fetchFileRaw(token, htmlPath(pageName));
+  return content;
+}
+
+// Any other repo file (e.g. a static/*.css) by its repo-relative path.
+export async function fetchFile(token, filePath) {
+  const { content } = await fetchFileRaw(token, filePath);
+  return content;
 }
 
 // Append a brand-new `.toc-section` (and its matching TOC nav link) to a wiki
@@ -88,11 +120,11 @@ function createSectionElement(doc, s) {
   return sec;
 }
 
-// Apply content to the cached HTML template and return the updated HTML string.
-async function generatePageHtml(pageName, content) {
-  const res = await fetch(`/wiki-cache/wiki/pages/${pageName}.html`);
-  if (!res.ok) return null;
-  const html = await res.text();
+// Apply content to the page's current live HTML template and return the
+// updated HTML string.
+async function generatePageHtml(token, pageName, content) {
+  const html = await fetchPageHtml(token, pageName).catch(() => null);
+  if (!html) return null;
 
   const doc = new DOMParser().parseFromString(html, 'text/html');
 
@@ -225,6 +257,22 @@ export async function fetchPageMeta(token, pageName) {
   return { lastCommitId: data.last_commit_id, content: JSON.parse(decodeBase64Utf8(data.content)) };
 }
 
+const SKIP_PAGES = new Set(['team.html', 'index.html']);
+
+// Live list of wiki/pages/*.html page names — see fetchFileRaw's note above;
+// the same staleness risk applies here (a newly added page silently missing
+// from the editor's sidebar until the next deploy).
+export async function fetchPageList(token) {
+  const url = `${BASE}/projects/${PROJECT_ID}/repository/tree?path=wiki%2Fpages&ref=${encodeURIComponent(BRANCH)}&per_page=100`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new Error(`GitLab error ${res.status} listing pages.`);
+  const tree = await res.json();
+  return tree
+    .filter(f => f.type === 'blob' && f.name.endsWith('.html') && !SKIP_PAGES.has(f.name))
+    .map(f => f.name.replace(/\.html$/, ''))
+    .sort();
+}
+
 export async function fetchCommitInfo(token, commitId) {
   const url = `${BASE}/projects/${PROJECT_ID}/repository/commits/${commitId}`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -254,7 +302,7 @@ export async function commitPage(token, pageName, content, lastCommitId, authorN
   // Invalidate cache so next load reads fresh JSON.
   pageCache.delete(pageName);
 
-  const htmlContent = await generatePageHtml(pageName, content).catch(() => null);
+  const htmlContent = await generatePageHtml(token, pageName, content).catch(() => null);
 
   const actions = [
     {

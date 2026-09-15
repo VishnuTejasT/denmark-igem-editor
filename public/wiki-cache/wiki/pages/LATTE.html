@@ -14,11 +14,22 @@
     <link rel="stylesheet" href="static/style.css">
     <link rel="stylesheet" href="static/denmark.css">
     <link rel="stylesheet" href="static/section-blocks.css">
+    <link rel="stylesheet" href="static/wiki-pages.css?v=d1ad75dc95bf">
   </head>
-  <body>
+  <body class="wiki-interior" data-page-family="research">
     <div id="scroll-progress"></div>
     <div id="nav"></div>
 
+
+    <main>
+      <div class="page-hero">
+        <div class="container"><div class="chapter-intro">
+          <h1>LATTE</h1>
+          <p class="summary">LOCKR Affinity and Thermodynamics Tuning Engine</p>
+        </div></div>
+      </div>
+
+      <div class="wiki-reading-layout">
     <aside class="toc-sidebar" aria-label="Table of contents">
       <div class="toc-handle" aria-hidden="true">Table of Contents</div>
       <nav class="toc-nav" id="toc-links" aria-label="Page sections">
@@ -28,16 +39,8 @@
         
         
         
-      <a href="#overview" data-toc="overview">Overview</a><a href="#workflow" data-toc="workflow">Judging</a><a href="#implementation" data-toc="implementation">Scanner</a><a href="#results" data-toc="results">Calculator</a><a href="#references" data-toc="references">References</a></nav>
+      <a href="pages/LATTE.html#overview" data-toc="overview">Overview</a><a href="pages/LATTE.html#workflow" data-toc="workflow">Judging</a><a href="pages/LATTE.html#implementation" data-toc="implementation">Scanner</a><a href="pages/LATTE.html#results" data-toc="results">Calculator</a><a href="pages/LATTE.html#references" data-toc="references">References</a></nav>
     </aside>
-
-    <main>
-      <div class="page-hero">
-        <div class="container">
-          <h2>LATTE</h2>
-          <p class="summary">LOCKR Affinity and Thermodynamics Tuning Engine</p>
-        </div>
-      </div>
 
       <div class="page-content">
         <div class="container">
@@ -54,24 +57,42 @@
 
           
 
-        <section class="wiki-section toc-section" id="overview"><h3>Overview</h3><div class="section-block"><p>Designing a LOCKR system is often time-intensive, and grafting a binder into perfect location of the protein's latch is difficult. To make things harder, deteg the efficiency of the LOCKR system simmers down to a ton of thermodynamics equations. </p>
+        <section class="wiki-section toc-section" id="overview"><h3><span class="chapter-number" aria-hidden="true">01</span><span>Overview</span></h3><div class="section-block">
+<h4>Problem</h4>
+Designing a LOCKR system is often time-intensive, and grafting a binder into perfect location of the protein's latch is difficult. To make things harder, detecting the efficiency of the LOCKR system, its fold-change simmers down to a ton of thermodynamics equations. LATTE solves these problems in a singular tool with 2 modules. It leverages a CPU-only framework that works at high speeds and efficiency. 
+</div><div class="section-block">
+<h4>Solution</h4>
+The first module is a binder scanner that finds acidic residues in the peptide, and replaces them with more neutral and favorable amino acids. This lowers cage-key interferences to improve LOCKR efficiency. The second module then incorporates user-focused variables and LOCKR-centered variables like cage-key affinity and lucKey concentrations to calculate fold-change, or the LOCKR system's ability to emit luminescence. 
+</div><div class="section-block">
+<h4>Interface</h4>
+Because LATTE is focused on making the mathematical aspect of LOCKR creation easy, we've decided to introduce a user-friendly interface too. LATTE has a CLI interface and a web-app interface served locally.
 </div></section><section class="wiki-section toc-section" id="workflow">
-            <h3>Judging</h3>
-            <div class="section-block"><p>--</p>
-</div>
-          </section><section class="wiki-section toc-section" id="implementation">
-            <h3>Scanner</h3>
-            <div class="section-block"><p>--</p>
-</div>
-          </section><section class="wiki-section toc-section" id="results">
-            <h3>Calculator</h3>
-            <div class="section-block"><p>--</p>
-</div>
-          </section><section class="wiki-section toc-section" id="references">
-            <h3>References</h3>
+            <h3><span class="chapter-number" aria-hidden="true">02</span><span>Judging</span></h3>
+            
+          <div class="section-block">
+<p>--</p>
+
+</div></section><section class="wiki-section toc-section" id="implementation">
+            <h3><span class="chapter-number" aria-hidden="true">03</span><span>Scanner</span></h3>
+            
+          <div class="section-block">
+<h4>Scanning &amp; Grafting Workflow</h4> 
+The first module is a binder scanner that finds acidic residues in the peptide. The main resdiues that the software switches out are Aspartic Acid and Glutamic Acid. After scanning, it then switches out these resdiues for more neutral and favorable amino acids that lower cage-key interferences.  The user then has a choice of grafting their original binder or the charge-optimized binder into the LOCKR system with a ***Rosetta GraftSwitchMover*** framework. The grafting process scans all possible scaffolding residues while also finding the best spot for the binder to be placed. The output LOCKR system can be downloaded as a PDB file for future use. 
+</div><div class="section-block">
+<h4>Choosing a Substitution Strategy</h4> 
+Regarding amino acid substitutions, the user has 2 choices: a **conservative** or **neutralizing** approach. A conservative approach involves substituting **aspartic acids** for **glutamines**, and **glutamic acids** for **asparagines**. This approach is often used to maintain the structure of the amino acid, by preserving hydrogen bonding. On the other hand, the neutralizing approach sterilizes the charge of the amino acid with small risks of changes in shape, as well as decreases in binding affinity. This approach substitutes aspartic and glutamic acids for alanine. By including this crucial step in LATTE, our software guarantees that the binder doesn't interact with K_CK interfaces.
+</div></section><section class="wiki-section toc-section" id="results">
+            <h3><span class="chapter-number" aria-hidden="true">04</span><span>Calculator</span></h3>
+            
+          <div class="section-block">
+<p>--</p>
+
+</div></section><section class="wiki-section toc-section" id="references">
+            <h3><span class="chapter-number" aria-hidden="true">05</span><span>References</span></h3>
             <ol class="references-list"><li class="section-block"><p>--</p>
 </li></ol>
           </section></div>
+      </div>
       </div>
     </main>
 
@@ -109,10 +130,7 @@
       })();
     </script>
     <script src="static/include.js"></script>
-    <script src="static/toc-hover.js"></script>
-    <script src="static/toc-watcher.js"></script>
-    
-      <script src="static/toc-drag.js"></script>
+    <script src="static/wiki-toc.js?v=022a3252fdb1"></script>
       <script src="static/carousel.js"></script>
   
 

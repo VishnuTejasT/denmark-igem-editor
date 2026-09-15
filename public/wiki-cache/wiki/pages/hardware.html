@@ -1,10 +1,9 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hardware — Denmark-GA iGEM 2025</title>
-    <base href="../" />
+    <base href="../">
     <script>
       (function () {
         var stored = localStorage.getItem('theme');
@@ -12,81 +11,112 @@
         if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
       })();
     </script>
-    <link rel="stylesheet" href="static/style.css" />
-    <link rel="stylesheet" href="static/denmark.css" />
-    <link rel="stylesheet" href="static/section-blocks.css" />
+    <link rel="stylesheet" href="static/style.css">
+    <link rel="stylesheet" href="static/denmark.css">
+    <link rel="stylesheet" href="static/section-blocks.css">
+    <link rel="stylesheet" href="static/wiki-pages.css?v=d1ad75dc95bf">
   </head>
-  <body>
+  <body class="wiki-interior" data-page-family="lab">
     <div id="scroll-progress"></div>
     <div id="nav"></div>
 
+
+    <main>
+      <div class="page-hero">
+        <div class="container"><div class="chapter-intro">
+          <h1>Hardware</h1>
+          <p class="summary draft-summary">--</p>
+        </div></div>
+      </div>
+
+      <div class="wiki-reading-layout">
     <aside class="toc-sidebar" aria-label="Table of contents">
       <div class="toc-handle" aria-hidden="true">Table of Contents</div>
       <nav class="toc-nav" id="toc-links" aria-label="Page sections">
         <p class="toc-nav-heading">On this page</p>
-        <a href="#overview"     data-toc="overview">Overview</a>
-        <a href="#design"       data-toc="design">Design Rationale</a>
-        <a href="#architecture" data-toc="architecture">System Architecture</a>
-        <a href="#testing"      data-toc="testing">Build &amp; Testing</a>
-        <a href="#results"      data-toc="results">Results</a>
-        <a href="#references"   data-toc="references">References</a>
-      </nav>
+        
+        
+        
+        
+        
+        
+      <a href="pages/hardware.html#overview" data-toc="overview">Overview</a><a href="pages/hardware.html#design" data-toc="design">Design Rationale</a><a href="pages/hardware.html#architecture" data-toc="architecture">System Architecture</a><a href="pages/hardware.html#testing" data-toc="testing">Build &amp; Testing</a><a href="pages/hardware.html#results" data-toc="results">Results</a><a href="pages/hardware.html#references" data-toc="references">References</a></nav>
     </aside>
-
-    <main>
-      <div class="page-hero">
-        <div class="container">
-          <h2>Hardware</h2>
-          <p class="summary">--</p>
-        </div>
-      </div>
 
       <div class="page-content">
         <div class="container">
 
-          <section class="wiki-section toc-section" id="overview">
-            <h3>Overview</h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
+          
 
-          <section class="wiki-section toc-section" id="design">
-            <h3>Design Rationale</h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
+          
 
-          <section class="wiki-section toc-section" id="architecture">
-            <h3>System Architecture</h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
+          
 
-          <section class="wiki-section toc-section" id="testing">
-            <h3>Build &amp; Testing</h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
+          
 
-          <section class="wiki-section toc-section" id="results">
-            <h3>Results</h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
+          
 
-          <section class="wiki-section toc-section" id="references">
-            <h3>References</h3>
-            <ol class="references-list">
-              <li class="section-block">--</li>
-            </ol>
-          </section>
+          
 
-        </div>
+        <section class="wiki-section toc-section" id="overview">
+            <h3><span class="chapter-number" aria-hidden="true">01</span><span>Overview</span></h3>
+            
+          <div class="section-block">
+<p>This project aims to utilize LATTE and HybriDock-Pep to solve real-world problems, like malaria diagnostic inaccuracies. Through this, we developed a new malaria diagnostic using the LOCKR sequence created by our software. In order to verify our diagnosticÃ¢ÂÂs efficacy, and, by proxy, the accuracy of our software, we had to ensure that the test can work in several different conditions, specifically those in the regions most affected by the HRP2 deletions in Plasmodium falciparum. The previously mentioned being the leading cause of the false negatives in current malaria tests. To replicate conditions in such regions, we built a humidity and temperature control chamber. </p>
+
+</div></section><section class="wiki-section toc-section" id="design">
+            <h3><span class="chapter-number" aria-hidden="true">02</span><span>Design Rationale</span></h3>
+            
+          <div class="section-block">
+<h4>Design Origins</h4>
+In the paper that our original proposal for the usage of the coffee ring effect arose from, researchers created a low-cost humidity chamber to control the conditions at which the drop was dried in. As it was described in the paper, the system consisted of a temperature/humidity sensor, a container of water, and a container of desiccant, the desiccant originally used in this experiment being anhydrous calcium phosphate (CaHPO4). To increase/decrease the humidity, air was circulated through either bottle and then directed into the chamber (DÃ¢ÂÂAgostino, Et. al 5-6). As a whole, this device and concept was the basis for our device. 
+
+</div><div class="section-block">
+<h4>Specifications</h4>
+The paper did not mention the specifics of every component in this system. For further detail, we reached out to D’Agostino, Et. al . In the response, they were able to relay the following details: While the sensor used in the original experiment, the DHT11, had a relatively large margin of error, there was a newer and more effective model named the DHT22. Whereas the DHT11 had a range of ±2.00℃, ±5% relative humidity (RH), and only operated from 20-90% humidity and 0-50℃, the DHT22 has a range of ±0.5℃, ±2% RH, and operated at the full  0-100% range of RH and -40-80℃. While for our purposes, the ranges of the DHT11 was sufficient, the additional accuracy of the DHT22 made it the clear choice, despite the higher cost (usually double the cost of the $2-4 price of the DHT11). Additionally, D’Agostino, Et. al mentioned that the physical chamber/enclosure that was used in their experiments was 3D printed, and used glass slides as the method of optical access to the reaction. 
+</div></section><section class="wiki-section toc-section" id="architecture">
+            <h3><span class="chapter-number" aria-hidden="true">03</span><span>System Architecture</span></h3>
+            
+          <div class="section-block">
+<p>Despite using the bottle-air-chamber system as described in the former as a base, there were still many aspects of the design that were left to discuss and create. Namely, the method of controlling airflow and itâs direction to either of the bottles was a topic of discussion. As with most small systems, the actual controlling of the action through data was left to an Arduino. As for the direction of the air: While there are several different ways, 3 ways in specific stood out due to their relative simplicity, with fast switching and no proportional blending (in other words, no air being sent partially). A 3-way solenoid uses one valve and one pump, wiring is simplest (one MOSFET channel, a mosfet being a type of transistor that acts as a switch), but it's a single point of failure and costs more per unit than a basic 2-way. two 2-way solenoids are cheaper individually and reuse the exact parts you already have, but need two MOSFET channels and can backflow into the closed branch if the two lines aren't pressure balanced. Dual pump skips valves entirely, just two pumps each dedicated to a bottle, so no valve clogging or leakage to worry about, at the cost of an extra pump and MOSFET channel instead of an extra valve.</p>
+
+</div><div class="section-block">
+<p>Across these three options, the 3-way solenoid was considered the most viable, even with the cost and risk factor associated. The simplicity of the wiring and extra efficiency was valued highly in what is a relatively low-resource, short time-span project. Having decided the basis for the humidity system, the team moved on to designing the wiring and tubing for the system as a whole. </p>
+
+</div><div class="section-block">
+<img src="https://static.igem.wiki/teams/6112/wiki/hardwareimgs/hardware-1.avif" alt="Figure 1" style="max-width:75%;display:block;margin:1.5em auto">
+<p style="text-align:center;font-style:italic;font-size:0.9em;color:#666;margin-top:0.4em">Figure 1</p>
+<p>Figure 1 depicts the first iteration of our design plan, using chalk markers as representatives for wires/tubes. It shows the steps of the process: from the sensor sending data to the Arduino, the Arduino controlling the MOSFET (gate) for the solenoid, which decides the direction of air through either a high or low signal from Arduino, to the air being sent into a bottle, the build up in pressure causing either dry or humid air being sent into the chamber (which is represented by the neon green box connected to both bottles). </p>
+
+</div><div class="section-block">
+<p>The team then began using CAD (Computer-Aided Design) to design the chamber through a software called Onshape. As per the original design of this system, the box itself was designed to be 3D Printed. </p>
+
+</div><div class="section-block">
+<img src="https://static.igem.wiki/teams/6112/wiki/hardwareimgs/hardware-2.avif" alt="Figure 2: Technical drawing depicting first iteration of humidity chamber" style="max-width:75%;display:block;margin:1.5em auto">
+<p style="text-align:center;font-style:italic;font-size:0.9em;color:#666;margin-top:0.4em">Figure 2: Technical drawing depicting first iteration of humidity chamber</p>
+<p>As shown in the title, the first design of the chamber was meant strictly to test the humidity system. An option to place a droplet (of any liquid, not the droplet meant to be tested) was given by the slide holder placed in the center. The holes on the left side of the chamber are designed to hold the tubing and hose end of the air system. The rectangular hole on the front of the design was designed to hold the humidity sensor, meant to face away from the ends of the tubing such that it reads the conditions of the chamber as a whole rather than be skewed by a specific side of the drying-humidifying cycle. </p>
+
+</div><div class="section-block">
+<h4>Internals of/Software within the Chamber</h4>
+As mentioned before, the system is controlled with an Arduino. However, the system is not quite as simple as just “under x value: humidify, over x value: dry”. The system uses a specific continous feedback mechanism called a “PID loop”. A PID loop (PID standing for proportion, integral, derivative) is a system that can analyze the data it receives to change how a system responds to better keep an output value to it’s target. It’s commonly used in industrial automation and engineering to create self managing systems.  In the context of our application, the system reads how fast the humidity within the chamber changes, how far it overshoots, and how hard or soft it needs to cut off to keep the error to a minimum.  For example, if the system reads that everytime it keeps the humidifying valve open for X seconds, it overshoots the target value by Z%, then it might adjust how long it takes to open/close the valve before it reaches the target such that it no longer overshoots. This loop can be ingrained within the code for the system, using code from common libraries. Additionally, we coded a simple app that can be ran off the wifi capabilities of our Arduino. It is used to actively change the target humidity without adjusting it manually in the code by connecting to the Arduino and using any web browser at the specific address.
+</div></section><section class="wiki-section toc-section" id="testing">
+            <h3><span class="chapter-number" aria-hidden="true">04</span><span>Build &amp; Testing</span></h3>
+            
+          <div class="section-block">
+<p>--</p>
+
+</div></section><section class="wiki-section toc-section" id="results">
+            <h3><span class="chapter-number" aria-hidden="true">05</span><span>Results</span></h3>
+            
+          <div class="section-block">
+<p>--</p>
+
+</div></section><section class="wiki-section toc-section" id="references">
+            <h3><span class="chapter-number" aria-hidden="true">06</span><span>References</span></h3>
+            <ol class="references-list"><li class="section-block"><p>--</p>
+</li></ol>
+          </section></div>
+      </div>
       </div>
     </main>
 
@@ -94,7 +124,7 @@
     <button id="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false" title="Toggle dark mode">
       <span id="theme-toggle-icon" aria-hidden="true"></span>
     </button>
-    <a id="back-to-top" href="#" aria-label="Back to top">&#8679;</a>
+    <a id="back-to-top" href="#" aria-label="Back to top">⇧</a>
     <script src="static/cursor.js"></script>
     <script>
       (function () {
@@ -124,10 +154,8 @@
       })();
     </script>
     <script src="static/include.js"></script>
-    <script src="static/toc-hover.js"></script>
-    <script src="static/toc-watcher.js"></script>
-    <script src="static/content-loader.js"></script>
-      <script src="static/toc-drag.js"></script>
+    <script src="static/wiki-toc.js?v=022a3252fdb1"></script>
       <script src="static/carousel.js"></script>
-  </body>
-</html>
+  
+
+</body></html>
