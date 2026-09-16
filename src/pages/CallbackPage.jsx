@@ -40,15 +40,18 @@ export default function CallbackPage() {
   if (error) {
     return (
       <div style={styles.page}>
-        <p style={{ color: 'red' }}>{error}</p>
-        <a href="/">Try again</a>
+        <div style={styles.card}>
+          <p style={styles.errorText}>{error}</p>
+          <a href="/" style={styles.link}>Try again</a>
+        </div>
       </div>
     );
   }
 
   return (
     <div style={styles.page}>
-      <p>Signing in…</p>
+      <div style={styles.spinner} />
+      <p style={styles.text}>Signing in…</p>
     </div>
   );
 }
@@ -60,6 +63,27 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     height: '100vh',
-    color: '#444',
+    gap: 16,
+    background: 'var(--bg)',
+    fontFamily: 'var(--font-ui)',
   },
+  text: { color: 'var(--ink-500)', fontSize: 14 },
+  spinner: {
+    width: 28,
+    height: 28,
+    borderRadius: '50%',
+    border: '3px solid var(--ink-200)',
+    borderTopColor: 'var(--accent)',
+    animation: 'wiki-spin 0.8s linear infinite',
+  },
+  card: {
+    background: 'var(--surface)',
+    border: '1px solid var(--ink-150)',
+    borderRadius: 14,
+    padding: '32px 36px',
+    textAlign: 'center',
+    boxShadow: 'var(--shadow-md)',
+  },
+  errorText: { color: 'var(--red)', fontSize: 13.5, margin: '0 0 12px', maxWidth: 340 },
+  link: { fontSize: 13.5, fontWeight: 600 },
 };

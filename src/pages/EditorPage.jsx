@@ -26,10 +26,10 @@ function computePageStatus(content) {
 }
 
 const STATUS_COLOR = {
-  complete: '#16a34a',
-  partial:  '#ca8a04',
-  empty:    '#dc2626',
-  unknown:  '#d1d5db',
+  complete: 'var(--green)',
+  partial:  'var(--amber)',
+  empty:    'var(--red)',
+  unknown:  'var(--ink-300)',
 };
 
 function normalizeContent(content, htmlSections) {
@@ -324,28 +324,31 @@ export default function EditorPage() {
   const canCommit = !!selectedPage && !committing && !loading;
 
   return (
-    <div style={styles.shell}>
+    <div className="app-shell">
       {/* Header */}
-      <header style={styles.header}>
-        <strong style={styles.logo}>iGEM Wiki Editor</strong>
+      <header className="app-header">
+        <span className="app-logo">
+          <span className="app-logo-mark">W</span>
+          iGEM Wiki Editor
+        </span>
 
         {unsaved && (
           <>
-            <span style={styles.unsavedBadge}>● unsaved draft</span>
-            <button style={styles.discardBtn} onClick={discardDraft}>Discard</button>
+            <span className="unsaved-badge">unsaved draft</span>
+            <button className="btn btn-sm" onClick={discardDraft}>Discard</button>
           </>
         )}
 
         <div style={{ flex: 1 }} />
 
         {status && (
-          <span style={{ color: status.type === 'error' ? '#c44' : '#2a9d2a', fontSize: 13 }}>
+          <span className={`status-msg ${status.type === 'error' ? 'error' : 'success'}`}>
             {status.message}
           </span>
         )}
 
         <input
-          style={styles.commitInput}
+          className="commit-input"
           type="text"
           placeholder={selectedPage ? `Update ${selectedPage} content` : 'Commit message'}
           value={commitMessage}
@@ -355,29 +358,29 @@ export default function EditorPage() {
         />
 
         <button
-          style={{ ...styles.btn, ...(canCommit ? styles.btnPrimary : styles.btnDisabled) }}
+          className="btn btn-primary"
           onClick={handleCommit}
           disabled={!canCommit}
         >
           {committing ? 'Committing…' : 'Commit'}
         </button>
 
-        <span style={styles.userBadge}>{username && `@${username}`}</span>
-        <button style={styles.btn} onClick={() => { sessionStorage.removeItem('gitlab_token'); navigate('/'); }}>
+        <span className="user-badge">{username && `@${username}`}</span>
+        <button className="btn" onClick={() => { sessionStorage.removeItem('gitlab_token'); navigate('/'); }}>
           Sign out
         </button>
       </header>
 
-      <div style={styles.body}>
+      <div className="app-body">
         {/* Sidebar */}
-        <aside style={styles.sidebar}>
-          <div style={styles.sidebarLabel}>Pages</div>
+        <aside className="sidebar">
+          <div className="sidebar-label">Pages</div>
 
           {/* Status legend */}
-          <div style={styles.legend}>
-            <span style={styles.legendItem}><span style={{ ...styles.dot, background: STATUS_COLOR.complete }} />done</span>
-            <span style={styles.legendItem}><span style={{ ...styles.dot, background: STATUS_COLOR.partial }} />partial</span>
-            <span style={styles.legendItem}><span style={{ ...styles.dot, background: STATUS_COLOR.empty }} />empty</span>
+          <div className="legend">
+            <span className="legend-item"><span className="status-dot" style={{ background: STATUS_COLOR.complete }} />done</span>
+            <span className="legend-item"><span className="status-dot" style={{ background: STATUS_COLOR.partial }} />partial</span>
+            <span className="legend-item"><span className="status-dot" style={{ background: STATUS_COLOR.empty }} />empty</span>
           </div>
 
           {pages.map(p => {
@@ -390,16 +393,16 @@ export default function EditorPage() {
             return (
               <button
                 key={p}
-                style={{ ...styles.pageItem, ...(isActive ? styles.pageItemActive : {}) }}
+                className={`page-item${isActive ? ' active' : ''}`}
                 onClick={() => handlePageSelect(p)}
               >
-                <span style={{ ...styles.statusDot, background: dotColor }} />
-                <span style={styles.pageName}>{p}</span>
+                <span className="status-dot" style={{ background: dotColor }} />
+                <span className="page-item-name">{p}</span>
                 {fraction && (
-                  <span style={styles.fraction}>{fraction}</span>
+                  <span className="page-item-fraction">{fraction}</span>
                 )}
                 {draft && (
-                  <span style={styles.draftDot} title="Unsaved draft">●</span>
+                  <span className="draft-dot" title="Unsaved draft">●</span>
                 )}
               </button>
             );
@@ -407,13 +410,13 @@ export default function EditorPage() {
         </aside>
 
         {/* Editor pane */}
-        <div style={styles.editorPane}>
+        <div className="editor-pane">
           {/* Session expired banner */}
           {sessionExpired && (
-            <div style={styles.authBanner}>
-              <span>🔒 Your GitLab session has expired. Sign out and sign back in to continue editing.</span>
+            <div className="banner banner-error">
+              <span>Your GitLab session has expired. Sign out and sign back in to continue editing.</span>
               <button
-                style={styles.reloadBtn}
+                className="banner-btn banner-btn-solid"
                 onClick={() => { sessionStorage.removeItem('gitlab_token'); navigate('/'); }}
               >
                 Sign out
@@ -423,21 +426,21 @@ export default function EditorPage() {
 
           {/* Stale warning banner */}
           {staleWarning && (
-            <div style={styles.staleBanner}>
+            <div className="banner banner-warning">
               <span>
-                ⚠️ <strong>{staleWarning.author}</strong> committed to this page
+                <strong>{staleWarning.author}</strong> committed to this page
                 {staleWarning.mins ? ` ${staleWarning.mins} min ago` : ''}.
                 {staleWarning.message ? ` "${staleWarning.message}"` : ''}
                 {' '}Reload to get the latest before editing.
               </span>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <button
-                  style={styles.reloadBtn}
+                  className="banner-btn banner-btn-solid"
                   onClick={() => { setStaleWarning(null); handlePageSelect(selectedPage); }}
                 >
                   Reload
                 </button>
-                <button style={styles.dismissBtn} onClick={() => setStaleWarning(null)}>
+                <button className="banner-btn banner-btn-ghost" onClick={() => setStaleWarning(null)}>
                   Dismiss
                 </button>
               </div>
@@ -445,109 +448,21 @@ export default function EditorPage() {
           )}
 
           {loading ? (
-            <div style={styles.placeholder}>Loading…</div>
+            <div className="placeholder">Loading…</div>
           ) : !selectedPage ? (
-            <div style={styles.placeholder}>Select a page from the sidebar.</div>
+            <div className="placeholder">Select a page from the sidebar to start editing.</div>
           ) : (
             <Editor content={content} onChange={handleContentChange} />
           )}
         </div>
 
         {/* Preview pane */}
-        <div style={styles.previewPane}>
-          <Preview selectedPage={selectedPage} content={content} token={token} />
+        <div className="preview-pane">
+          <div className="preview-frame-wrap">
+            <Preview selectedPage={selectedPage} content={content} token={token} />
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
-// ─── styles ─────────────────────────────────────────────────────────────────
-
-const styles = {
-  shell: {
-    display: 'flex', flexDirection: 'column', height: '100vh',
-    fontFamily: 'system-ui, -apple-system, sans-serif',
-  },
-  header: {
-    display: 'flex', alignItems: 'center', gap: 10,
-    padding: '0 16px', borderBottom: '1px solid #e0e0e0',
-    background: '#fff', flexShrink: 0, height: 50,
-  },
-  logo: { fontSize: 14, color: '#111', flexShrink: 0 },
-  unsavedBadge: { fontSize: 12, color: '#e07800', fontWeight: 600, flexShrink: 0 },
-  discardBtn: {
-    padding: '3px 10px', borderRadius: 5, border: '1px solid #e0b060',
-    background: '#fff8ee', color: '#b06000', cursor: 'pointer', fontSize: 12,
-  },
-  commitInput: {
-    padding: '5px 10px', borderRadius: 6, border: '1px solid #ddd',
-    fontSize: 13, width: 220, outline: 'none',
-  },
-  btn: {
-    padding: '5px 14px', borderRadius: 6, border: '1px solid #ddd',
-    background: '#fff', cursor: 'pointer', fontSize: 13, color: '#333', flexShrink: 0,
-  },
-  btnPrimary: { background: '#1a73e8', color: '#fff', border: 'none', fontWeight: 600 },
-  btnDisabled: { background: '#e8e8e8', color: '#aaa', border: 'none', cursor: 'not-allowed' },
-  userBadge: { fontSize: 13, color: '#999', flexShrink: 0 },
-  body: { flex: 1, display: 'flex', overflow: 'hidden' },
-  sidebar: {
-    width: 210, flexShrink: 0, borderRight: '1px solid #e8e8e8',
-    background: '#fafafa', overflowY: 'auto', paddingTop: 6,
-  },
-  sidebarLabel: {
-    padding: '6px 14px 4px', fontSize: 10, fontWeight: 700,
-    textTransform: 'uppercase', letterSpacing: '0.1em', color: '#bbb',
-  },
-  legend: {
-    display: 'flex', gap: 10, padding: '4px 14px 10px', borderBottom: '1px solid #ebebeb',
-    marginBottom: 4,
-  },
-  legendItem: {
-    display: 'flex', alignItems: 'center', gap: 4,
-    fontSize: 10, color: '#999',
-  },
-  dot: {
-    width: 7, height: 7, borderRadius: '50%', display: 'inline-block', flexShrink: 0,
-  },
-  pageItem: {
-    display: 'flex', alignItems: 'center', gap: 7,
-    width: '100%', padding: '7px 14px', border: 'none', background: 'none',
-    cursor: 'pointer', textAlign: 'left', fontSize: 13, color: '#444',
-  },
-  pageItemActive: { background: '#e8f0fe', color: '#1a73e8', fontWeight: 600 },
-  statusDot: {
-    width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-  },
-  pageName: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 },
-  fraction: { fontSize: 10, color: '#aaa', flexShrink: 0, fontVariantNumeric: 'tabular-nums' },
-  draftDot: { fontSize: 9, color: '#e07800', flexShrink: 0 },
-  editorPane: {
-    width: 500, flexShrink: 0, borderRight: '1px solid #e8e8e8',
-    overflowY: 'auto', background: '#fff', display: 'flex', flexDirection: 'column',
-  },
-  previewPane: { flex: 1, overflow: 'hidden', background: '#fafafa' },
-  placeholder: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    height: '100%', color: '#ccc', fontSize: 14,
-  },
-  staleBanner: {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-    padding: '10px 16px', background: '#fff8e1', borderBottom: '1px solid #f0c040',
-    fontSize: 13, color: '#7a5c00', flexShrink: 0,
-  },
-  authBanner: {
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-    padding: '10px 16px', background: '#fef2f2', borderBottom: '1px solid #fca5a5',
-    fontSize: 13, color: '#7f1d1d', flexShrink: 0,
-  },
-  reloadBtn: {
-    padding: '4px 12px', borderRadius: 5, border: '1px solid #c09000',
-    background: '#fff3c0', color: '#7a5c00', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-  },
-  dismissBtn: {
-    padding: '4px 10px', borderRadius: 5, border: '1px solid #ddd',
-    background: '#fff', color: '#888', cursor: 'pointer', fontSize: 12,
-  },
-};

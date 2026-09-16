@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import MDEditor from '@uiw/react-md-editor';
+import MDEditor, { commands as mdCommands, MarkdownUtil } from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import { emptyBlock, SIZE_MAP, defaultTableMarkdown, uniqueSectionId, sectionIsFilled } from '../lib/blocks';
 
@@ -12,33 +12,99 @@ const BLOCK_LABELS = {
   subsection: 'Subsection',
 };
 
+// ─── extra rich-text commands (superscript, subscript, underline, highlight) ─
+// Symmetric wrap/unwrap, same mechanics as the built-in bold/strikethrough
+// commands — reuses the library's own selectWord/executeCommand so toggling
+// off an already-wrapped selection behaves identically to the stock buttons.
+
+function textIcon(label, style) {
+  return (
+    <span style={{ fontSize: 11, fontWeight: 800, fontFamily: 'ui-serif, Georgia, serif', ...style }}>
+      {label}
+    </span>
+  );
+}
+
+function wrapCommand({ name, shortcuts, label, icon, prefix, suffix = prefix }) {
+  return {
+    name,
+    keyCommand: name,
+    shortcuts,
+    buttonProps: { 'aria-label': label, title: label },
+    icon,
+    execute: (state, api) => {
+      const range = MarkdownUtil.selectWord({ text: state.text, selection: state.selection, prefix, suffix });
+      const state1 = api.setSelectionRange(range);
+      MarkdownUtil.executeCommand({ api, selectedText: state1.selectedText, selection: state.selection, prefix, suffix });
+    },
+  };
+}
+
+const superscriptCommand = wrapCommand({
+  name: 'superscript',
+  label: 'Superscript (^text^)',
+  icon: textIcon('x²'),
+  prefix: '^',
+});
+const subscriptCommand = wrapCommand({
+  name: 'subscript',
+  label: 'Subscript (~text~)',
+  icon: textIcon('x₂'),
+  prefix: '~',
+});
+const underlineCommand = wrapCommand({
+  name: 'underline',
+  shortcuts: 'ctrlcmd+u',
+  label: 'Underline (++text++, ctrl + u)',
+  icon: textIcon('U', { textDecoration: 'underline' }),
+  prefix: '++',
+});
+const highlightCommand = wrapCommand({
+  name: 'highlight',
+  label: 'Highlight (==text==)',
+  icon: textIcon('A', { background: '#fde68a', padding: '0 2px', borderRadius: 2 }),
+  prefix: '==',
+});
+
+// Insert the four new buttons right after strikethrough, so they sit with
+// the other inline-formatting marks rather than off in their own group.
+const TEXT_EDITOR_COMMANDS = (() => {
+  const base = mdCommands.getCommands();
+  const i = base.findIndex(c => c.name === 'strikethrough');
+  const extra = [superscriptCommand, subscriptCommand, underlineCommand, highlightCommand];
+  return i === -1 ? [...base, ...extra] : [...base.slice(0, i + 1), ...extra, ...base.slice(i + 1)];
+})();
+
 // ─── per-block editors ───────────────────────────────────────────────────────
 
 function TextBlockEditor({ block, onChange }) {
   return (
-    <MDEditor
-      value={block.markdown ?? ''}
-      onChange={val => onChange({ ...block, markdown: val ?? '' })}
-      preview="edit"
-      height={160}
-      visibleDragbar={false}
-      style={{ borderRadius: 6, fontSize: 13 }}
-    />
+    <div className="wiki-md-editor" data-color-mode="light">
+      <MDEditor
+        value={block.markdown ?? ''}
+        onChange={val => onChange({ ...block, markdown: val ?? '' })}
+        preview="edit"
+        height={160}
+        visibleDragbar={false}
+        commands={TEXT_EDITOR_COMMANDS}
+      />
+    </div>
   );
 }
 
 function ImageBlockEditor({ block, onChange }) {
   return (
     <div>
-      <div style={formStyles.row}>
+      <div className="form-row">
         <input
-          style={{ ...formStyles.input, flex: 3 }}
+          className="field-input"
+          style={{ flex: 3 }}
           placeholder="iGEM upload URL  (https://static.igem.wiki/teams/…)"
           value={block.url ?? ''}
           onChange={e => onChange({ ...block, url: e.target.value })}
         />
         <select
-          style={formStyles.select}
+          className="field-select"
           value={block.size}
           onChange={e => onChange({ ...block, size: e.target.value })}
         >
@@ -46,13 +112,13 @@ function ImageBlockEditor({ block, onChange }) {
         </select>
       </div>
       <input
-        style={{ ...formStyles.input, width: '100%' }}
+        className="field-input"
         placeholder="Caption (optional)"
         value={block.caption ?? ''}
         onChange={e => onChange({ ...block, caption: e.target.value })}
       />
       {(block.url || '').trim() && (
-        <img src={block.url} alt="" style={formStyles.imagePreview} />
+        <img className="image-preview" src={block.url} alt="" />
       )}
     </div>
   );
@@ -68,26 +134,28 @@ function CarouselBlockEditor({ block, onChange }) {
   return (
     <div>
       {slides.map((slide, i) => (
-        <div key={i} style={formStyles.carouselRow}>
-          <span style={formStyles.slideNum}>{i + 1}</span>
+        <div key={i} className="form-row">
+          <span className="slide-num">{i + 1}</span>
           <input
-            style={{ ...formStyles.input, flex: 2 }}
+            className="field-input"
+            style={{ flex: 2 }}
             placeholder="iGEM upload URL"
             value={slide.url}
             onChange={e => update(i, 'url', e.target.value)}
           />
           <input
-            style={{ ...formStyles.input, flex: 1 }}
+            className="field-input"
+            style={{ flex: 1 }}
             placeholder="Caption for this image"
             value={slide.caption}
             onChange={e => update(i, 'caption', e.target.value)}
           />
           {slides.length > 1 && (
-            <button style={formStyles.removeSlideBtn} onClick={() => removeSlide(i)}>✕</button>
+            <button className="btn btn-icon btn-danger" onClick={() => removeSlide(i)}>✕</button>
           )}
         </div>
       ))}
-      <button style={formStyles.addSlideBtn} onClick={addSlide}>+ Add image</button>
+      <button className="btn btn-sm" onClick={addSlide}>+ Add image</button>
     </div>
   );
 }
@@ -104,30 +172,33 @@ function TableBlockEditor({ block, onChange }) {
 
   return (
     <div>
-      <div style={formStyles.row}>
-        <label style={formStyles.tableLabel}>Rows</label>
+      <div className="form-row">
+        <label style={{ fontSize: 12, color: 'var(--ink-500)' }}>Rows</label>
         <input
-          style={{ ...formStyles.input, width: 60 }}
+          className="field-input"
+          style={{ width: 60 }}
           type="number" min={1} max={20}
           value={rows}
           onChange={e => setRows(e.target.value)}
         />
-        <label style={formStyles.tableLabel}>Columns</label>
+        <label style={{ fontSize: 12, color: 'var(--ink-500)' }}>Columns</label>
         <input
-          style={{ ...formStyles.input, width: 60 }}
+          className="field-input"
+          style={{ width: 60 }}
           type="number" min={1} max={10}
           value={cols}
           onChange={e => setCols(e.target.value)}
         />
-        <button style={formStyles.addSlideBtn} onClick={regenerate}>Regenerate grid</button>
+        <button className="btn btn-sm" onClick={regenerate}>Regenerate grid</button>
       </div>
       <textarea
-        style={{ ...formStyles.input, width: '100%', fontFamily: 'monospace', resize: 'vertical', boxSizing: 'border-box' }}
+        className="field-textarea"
+        style={{ fontFamily: 'var(--font-mono)' }}
         rows={5}
         value={block.markdown ?? ''}
         onChange={e => onChange({ ...block, markdown: e.target.value })}
       />
-      <div style={formStyles.tableHint}>
+      <div className="table-hint">
         Edit cell text directly above using Markdown table syntax. "Regenerate grid" replaces
         the whole table with a fresh empty grid of the given size.
       </div>
@@ -145,28 +216,31 @@ function CollapsibleBlockEditor({ block, onChange }) {
   return (
     <div>
       <input
-        style={{ ...formStyles.input, width: '100%', marginBottom: 8 }}
+        className="field-input"
+        style={{ marginBottom: 8 }}
         placeholder="Left column header (e.g. Feature) — optional"
         value={block.heading ?? ''}
         onChange={e => onChange({ ...block, heading: e.target.value })}
       />
       {rows.map((row, i) => (
-        <div key={i} style={formStyles.clRowGroup}>
-          <div style={formStyles.carouselRow}>
-            <span style={formStyles.slideNum}>{i + 1}</span>
+        <div key={i} className="cl-row-group">
+          <div className="form-row">
+            <span className="slide-num">{i + 1}</span>
             <input
-              style={{ ...formStyles.input, flex: 2 }}
+              className="field-input"
+              style={{ flex: 2 }}
               placeholder="Feature (e.g. Primer length)"
               value={row.feature}
               onChange={e => update(i, 'feature', e.target.value)}
             />
             <input
-              style={{ ...formStyles.input, flex: 1 }}
+              className="field-input"
+              style={{ flex: 1 }}
               placeholder="Rule / Range (e.g. 28–36 nt)"
               value={row.rule}
               onChange={e => update(i, 'rule', e.target.value)}
             />
-            <label style={formStyles.checkboxLabel}>
+            <label className="checkbox-label">
               <input
                 type="checkbox"
                 checked={row.required}
@@ -175,11 +249,12 @@ function CollapsibleBlockEditor({ block, onChange }) {
               Required
             </label>
             {rows.length > 1 && (
-              <button style={formStyles.removeSlideBtn} onClick={() => removeRow(i)}>✕</button>
+              <button className="btn btn-icon btn-danger" onClick={() => removeRow(i)}>✕</button>
             )}
           </div>
           <textarea
-            style={{ ...formStyles.input, ...formStyles.clDetailInput }}
+            className="field-textarea"
+            style={{ marginTop: 6 }}
             placeholder="Expanded explanation shown when the row is opened"
             rows={2}
             value={row.detail}
@@ -187,7 +262,7 @@ function CollapsibleBlockEditor({ block, onChange }) {
           />
         </div>
       ))}
-      <button style={formStyles.addSlideBtn} onClick={addRow}>+ Add row</button>
+      <button className="btn btn-sm" onClick={addRow}>+ Add row</button>
     </div>
   );
 }
@@ -196,7 +271,7 @@ function SubsectionBlockEditor({ block, onChange, depth }) {
   return (
     <div>
       <input
-        style={styles.subsectionHeadingInput}
+        className="subsection-heading-input"
         placeholder="Subsection heading (e.g. Materials)"
         value={block.heading ?? ''}
         onChange={e => onChange({ ...block, heading: e.target.value })}
@@ -214,15 +289,15 @@ function SubsectionBlockEditor({ block, onChange, depth }) {
 
 function BlockItem({ block, onChange, onRemove, onMoveUp, onMoveDown, canMoveUp, canMoveDown, depth }) {
   return (
-    <div style={styles.blockCard}>
-      <div style={styles.blockHeader}>
-        <span style={styles.blockType}>{BLOCK_LABELS[block.type] || block.type}</span>
+    <div className="block-card">
+      <div className="block-header">
+        <span className="block-type-label">{BLOCK_LABELS[block.type] || block.type}</span>
         <div style={{ flex: 1 }} />
         {/* Subsections are always their own card, so the toggle only applies to
             ordinary blocks — and only at the top level, since cards don't nest. */}
         {block.type !== 'subsection' && depth === 0 && (
           <button
-            style={block.standalone ? styles.cardToggleOn : styles.cardToggle}
+            className={`card-toggle${block.standalone ? ' on' : ''}`}
             onClick={() => onChange({ ...block, standalone: !block.standalone })}
             title={block.standalone
               ? 'This block is in its own card — click to merge it into the card above'
@@ -231,9 +306,9 @@ function BlockItem({ block, onChange, onRemove, onMoveUp, onMoveDown, canMoveUp,
             {block.standalone ? '▣ Own card' : '▢ Own card'}
           </button>
         )}
-        <button style={styles.iconBtn} disabled={!canMoveUp} onClick={onMoveUp} title="Move up">↑</button>
-        <button style={styles.iconBtn} disabled={!canMoveDown} onClick={onMoveDown} title="Move down">↓</button>
-        <button style={styles.removeBtn} onClick={onRemove}>✕ Remove</button>
+        <button className="btn btn-icon" disabled={!canMoveUp} onClick={onMoveUp} title="Move up">↑</button>
+        <button className="btn btn-icon" disabled={!canMoveDown} onClick={onMoveDown} title="Move down">↓</button>
+        <button className="btn btn-sm btn-danger" onClick={onRemove}>✕ Remove</button>
       </div>
 
       {block.type === 'text' && <TextBlockEditor block={block} onChange={onChange} />}
@@ -265,7 +340,7 @@ function BlockList({ blocks: rawBlocks, onChange, depth }) {
   const addTextSnippet = (markdown) => onChange([...blocks, { ...emptyBlock('text'), markdown }]);
 
   return (
-    <div style={depth > 0 ? styles.nestedBlockList : undefined}>
+    <div className={depth > 0 ? 'nested-block-list' : undefined}>
       {blocks.map((block, i) => (
         <BlockItem
           key={block.id || `block-${i}`}
@@ -281,28 +356,28 @@ function BlockList({ blocks: rawBlocks, onChange, depth }) {
       ))}
 
       {blocks.length === 0 && (
-        <div style={styles.emptyBlockMsg}>
+        <div className="empty-block-msg">
           {depth > 0 ? 'No content in this subsection yet.' : 'No content yet.'} Add a block below.
         </div>
       )}
 
-      <div style={styles.addBar}>
-        <button style={styles.snippetBtn} onClick={() => addBlock('text')}>+ Text</button>
-        <button style={styles.snippetBtn} onClick={() => addBlock('image')}>+ Image</button>
-        <button style={styles.snippetBtn} onClick={() => addBlock('carousel')}>+ Carousel</button>
-        <button style={styles.snippetBtn} onClick={() => addBlock('table')}>+ Table</button>
-        <button style={styles.snippetBtn} onClick={() => addBlock('collapsible')}>+ Collapsible List</button>
+      <div className="add-bar">
+        <button className="pill-btn" onClick={() => addBlock('text')}>+ Text</button>
+        <button className="pill-btn" onClick={() => addBlock('image')}>+ Image</button>
+        <button className="pill-btn" onClick={() => addBlock('carousel')}>+ Carousel</button>
+        <button className="pill-btn" onClick={() => addBlock('table')}>+ Table</button>
+        <button className="pill-btn" onClick={() => addBlock('collapsible')}>+ Collapsible List</button>
         {depth === 0 && (
-          <button style={styles.snippetBtn} onClick={() => addBlock('subsection')}>+ Subsection</button>
+          <button className="pill-btn" onClick={() => addBlock('subsection')}>+ Subsection</button>
         )}
         <button
-          style={styles.snippetBtn}
+          className="pill-btn"
           onClick={() => addTextSnippet('**[N]** Author(s). Title. *Journal* Year;Vol:Pages.')}
         >
           + Reference
         </button>
         <button
-          style={styles.snippetBtn}
+          className="pill-btn"
           onClick={() => addTextSnippet('[link text](https://)')}
         >
           + Link
@@ -386,12 +461,12 @@ export default function Editor({ content: rawContent, onChange }) {
   };
 
   return (
-    <div style={styles.wrap} data-color-mode="light">
+    <div className="editor-wrap">
       {/* Meta fields */}
-      <div style={styles.metaSection}>
+      <div className="meta-section">
         <Field label="Page Title">
           <input
-            style={styles.input}
+            className="field-input"
             value={content.title}
             onChange={e => set('title', e.target.value)}
             placeholder="Page title (shown in the hero banner)"
@@ -399,7 +474,7 @@ export default function Editor({ content: rawContent, onChange }) {
         </Field>
         <Field label="Introduction">
           <textarea
-            style={{ ...styles.input, ...styles.textarea }}
+            className="field-textarea"
             value={content.intro}
             rows={3}
             onChange={e => set('intro', e.target.value)}
@@ -409,33 +484,33 @@ export default function Editor({ content: rawContent, onChange }) {
       </div>
 
       {content.sections.length === 0 && (
-        <div style={styles.emptyMsg}>No sections found. Select a page to begin editing.</div>
+        <div className="empty-msg">No sections found. Select a page to begin editing.</div>
       )}
 
       {content.sections.map((section, i) => (
         // Keyed by position, not id: a newly-added section's id is re-slugified
         // on every keystroke (see updateHeading), which would otherwise remount
         // the card — and its inputs — mid-edit.
-        <div key={i} style={styles.sectionCard}>
-          <div style={styles.sectionHeader}>
+        <div key={i} className="section-card">
+          <div className="section-header">
             <input
-              style={styles.sectionHeadingInput}
+              className="section-heading-input"
               value={section.heading ?? ''}
               onChange={e => updateHeading(section.id, e.target.value)}
               onBlur={() => resyncSectionId(section.id)}
               placeholder="Section name"
             />
-            <span style={styles.sectionId}>
+            <span className="section-id-badge">
               #{uniqueSectionId(section.heading, reservedIds(section.id))}
             </span>
             <button
-              style={styles.iconBtn}
+              className="btn btn-icon"
               disabled={i === 0}
               onClick={() => moveSection(section.id, -1)}
               title="Move section up"
             >↑</button>
             <button
-              style={styles.iconBtn}
+              className="btn btn-icon"
               disabled={i === content.sections.length - 1}
               onClick={() => moveSection(section.id, 1)}
               title="Move section down"
@@ -445,7 +520,7 @@ export default function Editor({ content: rawContent, onChange }) {
                 real and to clear stale/phantom ones. Confirm first when the
                 section actually has content, since this is destructive. */}
             <button
-              style={styles.removeBtn}
+              className="btn btn-sm btn-danger"
               title="Remove this section"
               onClick={() => {
                 const filled = (section.blocks || []).length > 0 && sectionIsFilled(section);
@@ -465,10 +540,10 @@ export default function Editor({ content: rawContent, onChange }) {
         </div>
       ))}
 
-      <button style={styles.addSectionBtn} onClick={addSection}>+ Add Section</button>
+      <button className="add-section-btn" onClick={addSection}>+ Add Section</button>
 
       {content.sections.length > 0 && (
-        <p style={styles.hint}>
+        <p className="hint-text">
           Each section is a stack of blocks — text, images, tables, collapsible lists, and
           subsections. Subsections are their own mini cards that can hold the same block types.
           The preview on the right shows how it will look on the wiki. New sections appear on the
@@ -481,113 +556,9 @@ export default function Editor({ content: rawContent, onChange }) {
 
 function Field({ label, children }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <label style={styles.fieldLabel}>{label}</label>
+    <div className="meta-field">
+      <label className="field-label">{label}</label>
       {children}
     </div>
   );
 }
-
-// ─── styles ─────────────────────────────────────────────────────────────────
-
-const styles = {
-  wrap: { padding: '20px 20px 40px', minHeight: '100%' },
-  metaSection: { marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid #ebebeb' },
-  fieldLabel: {
-    display: 'block', fontWeight: 700, marginBottom: 5,
-    fontSize: 11, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em',
-  },
-  input: {
-    width: '100%', padding: '7px 10px', border: '1px solid #ddd',
-    borderRadius: 6, fontSize: 13, outline: 'none', boxSizing: 'border-box', color: '#222',
-  },
-  textarea: { resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 },
-  sectionCard: {
-    marginBottom: 28, paddingBottom: 24, borderBottom: '1px solid #f0f0f0',
-  },
-  sectionHeader: { display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 10 },
-  sectionHeadingInput: {
-    fontWeight: 700, fontSize: 15, color: '#111', border: '1px solid #eee',
-    borderRadius: 4, padding: '2px 6px', outline: 'none', flex: 1, minWidth: 0,
-    fontFamily: 'inherit', background: 'transparent',
-  },
-  sectionId: { fontSize: 11, color: '#bbb', fontFamily: 'monospace' },
-
-  blockCard: {
-    border: '1px solid #ebebeb', borderRadius: 8, padding: '10px 12px',
-    marginBottom: 10, background: '#fff',
-  },
-  blockHeader: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 9 },
-  blockType: {
-    fontSize: 10.5, fontWeight: 700, color: '#1a73e8',
-    textTransform: 'uppercase', letterSpacing: '0.06em',
-  },
-  iconBtn: {
-    border: '1px solid #ddd', background: '#fff', borderRadius: 5,
-    padding: '2px 8px', cursor: 'pointer', fontSize: 12, color: '#666',
-  },
-  removeBtn: {
-    border: '1px solid #fcc', background: '#fff', color: '#c44', borderRadius: 5,
-    padding: '2px 9px', cursor: 'pointer', fontSize: 12,
-  },
-  cardToggle: {
-    border: '1px solid #ddd', background: '#fff', color: '#888', borderRadius: 5,
-    padding: '2px 9px', cursor: 'pointer', fontSize: 12, whiteSpace: 'nowrap',
-  },
-  cardToggleOn: {
-    border: '1px solid #9cc4ee', background: '#e8f0fe', color: '#1a73e8', borderRadius: 5,
-    padding: '2px 9px', cursor: 'pointer', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
-  },
-  nestedBlockList: {
-    marginTop: 8, marginBottom: 4, paddingLeft: 14, borderLeft: '2px solid #e8f0fe',
-  },
-  addBar: { display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 2, marginBottom: 4 },
-  snippetBtn: {
-    padding: '3px 11px', borderRadius: 20, border: '1px solid #e0e0e0',
-    background: '#f8f8f8', cursor: 'pointer', fontSize: 12, color: '#555',
-  },
-  emptyBlockMsg: { color: '#bbb', fontSize: 12, padding: '10px 0' },
-  subsectionHeadingInput: {
-    fontWeight: 700, fontSize: 13, color: '#111', border: '1px solid #eee',
-    borderRadius: 4, padding: '4px 8px', outline: 'none', width: '100%',
-    marginBottom: 8, fontFamily: 'inherit', background: 'transparent', boxSizing: 'border-box',
-  },
-
-  addSectionBtn: {
-    display: 'block', width: '100%', padding: '10px 0', marginTop: 4,
-    borderRadius: 8, border: '1px dashed #c8d8fb', background: '#f5f8ff',
-    color: '#1a73e8', cursor: 'pointer', fontSize: 13, fontWeight: 600,
-  },
-  emptyMsg: { color: '#ccc', textAlign: 'center', padding: '48px 0', fontSize: 14 },
-  hint: { fontSize: 11, color: '#ccc', textAlign: 'center', marginTop: 16 },
-};
-
-const formStyles = {
-  row: { display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 },
-  carouselRow: { display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 },
-  input: {
-    padding: '6px 10px', border: '1px solid #ccd', borderRadius: 6,
-    fontSize: 13, outline: 'none', color: '#222', boxSizing: 'border-box',
-  },
-  select: {
-    padding: '6px 8px', border: '1px solid #ccd', borderRadius: 6,
-    fontSize: 13, outline: 'none', background: '#fff',
-  },
-  addSlideBtn: {
-    padding: '5px 12px', borderRadius: 6, border: '1px solid #1a73e8',
-    background: '#fff', color: '#1a73e8', cursor: 'pointer', fontSize: 12,
-  },
-  slideNum: {
-    fontSize: 11, color: '#aaa', width: 16, textAlign: 'right', flexShrink: 0,
-  },
-  removeSlideBtn: {
-    padding: '4px 8px', borderRadius: 5, border: '1px solid #fcc',
-    background: '#fff', color: '#c44', cursor: 'pointer', fontSize: 12, flexShrink: 0,
-  },
-  tableLabel: { fontSize: 12, color: '#666' },
-  tableHint: { fontSize: 11, color: '#888', lineHeight: 1.6, marginTop: 6 },
-  clRowGroup: { marginBottom: 10, paddingBottom: 10, borderBottom: '1px dashed #dde6f7' },
-  clDetailInput: { width: '100%', marginTop: 6, resize: 'vertical', fontFamily: 'inherit' },
-  checkboxLabel: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#666', flexShrink: 0, whiteSpace: 'nowrap' },
-  imagePreview: { maxWidth: '100%', marginTop: 8, borderRadius: 6, display: 'block' },
-};

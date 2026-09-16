@@ -45,10 +45,10 @@ export default class ErrorBoundary extends Component {
         </p>
 
         <div style={styles.actions}>
-          <button style={styles.primary} onClick={() => this.clearDrafts()}>
+          <button className="btn btn-primary" onClick={() => this.clearDrafts()}>
             Discard local drafts &amp; reload
           </button>
-          <button style={styles.secondary} onClick={() => window.location.reload()}>
+          <button className="btn" onClick={() => window.location.reload()}>
             Just reload
           </button>
         </div>
@@ -64,24 +64,16 @@ export default class ErrorBoundary extends Component {
 
 const styles = {
   wrap: {
-    maxWidth: 780, margin: '0 auto', padding: '48px 24px',
-    fontFamily: 'system-ui, -apple-system, sans-serif', color: '#222',
+    maxWidth: 780, margin: '48px auto', padding: '0 24px 48px',
+    fontFamily: 'var(--font-ui)', color: 'var(--ink-800)',
   },
-  title: { fontSize: 22, margin: '0 0 10px' },
-  lead: { fontSize: 14, lineHeight: 1.6, color: '#555', margin: '0 0 20px' },
+  title: { fontSize: 22, margin: '0 0 10px', fontWeight: 800, color: 'var(--ink-900)' },
+  lead: { fontSize: 14, lineHeight: 1.6, color: 'var(--ink-500)', margin: '0 0 20px' },
   actions: { display: 'flex', gap: 10, marginBottom: 22 },
-  primary: {
-    padding: '8px 16px', borderRadius: 6, border: 'none',
-    background: '#1a73e8', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer',
-  },
-  secondary: {
-    padding: '8px 16px', borderRadius: 6, border: '1px solid #ddd',
-    background: '#fff', color: '#333', fontSize: 13, cursor: 'pointer',
-  },
-  hint: { fontSize: 13, color: '#777', margin: '0 0 8px' },
+  hint: { fontSize: 13, color: 'var(--ink-400)', margin: '0 0 8px' },
   pre: {
-    background: '#f6f6f6', border: '1px solid #e2e2e2', borderRadius: 8,
-    padding: 14, fontSize: 12, lineHeight: 1.5, whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word', maxHeight: 360, overflow: 'auto', color: '#444',
+    background: 'var(--ink-100)', border: '1px solid var(--ink-200)', borderRadius: 10,
+    padding: 14, fontSize: 12, lineHeight: 1.5, whiteSpace: 'pre-wrap', fontFamily: 'var(--font-mono)',
+    wordBreak: 'break-word', maxHeight: 360, overflow: 'auto', color: 'var(--ink-700)',
   },
 };

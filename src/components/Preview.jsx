@@ -348,20 +348,20 @@ export default function Preview({ selectedPage, content, token }) {
   }, [content]);
 
   if (!selectedPage) {
-    return <div style={styles.placeholder}>Select a page to preview.</div>;
+    return <div className="placeholder">Select a page to preview.</div>;
   }
   if (loading) {
-    return <div style={styles.placeholder}>Loading preview…</div>;
+    return <div className="placeholder">Loading preview…</div>;
   }
   if (fetchError) {
-    return <div style={styles.error}>Preview error: {fetchError}</div>;
+    return <div className="error-text">Preview error: {fetchError}</div>;
   }
 
   return (
     <iframe
       ref={iframeRef}
       sandbox="allow-scripts allow-same-origin"
-      style={styles.frame}
+      style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
       title="Wiki Preview"
       onLoad={() => {
         iframeLoadedRef.current = true;
@@ -373,12 +373,3 @@ export default function Preview({ selectedPage, content, token }) {
     />
   );
 }
-
-const styles = {
-  frame: { width: '100%', height: '100%', border: 'none', display: 'block' },
-  placeholder: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    height: '100%', color: '#bbb', fontSize: 14,
-  },
-  error: { padding: 24, color: '#c00', fontSize: 14 },
-};

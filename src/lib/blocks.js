@@ -2,6 +2,62 @@ import { marked } from 'marked';
 
 marked.use({ gfm: true, breaks: true });
 
+// Extra inline formatting beyond marked's defaults, matching the toolbar
+// buttons added in Editor.jsx. Each tokenizer requires a negative lookahead
+// on the closing side so `~sub~` never swallows part of GFM's `~~strike~~`
+// (tried first for any position where both could start) — marked tries
+// custom extensions before its own built-ins, so returning `undefined` here
+// on a double-tilde correctly falls through to the built-in strikethrough
+// tokenizer instead of misfiring.
+marked.use({
+  extensions: [
+    {
+      name: 'superscript',
+      level: 'inline',
+      start(src) { return src.indexOf('^'); },
+      tokenizer(src) {
+        const match = /^\^([^\^\n]+)\^/.exec(src);
+        if (!match) return;
+        return { type: 'superscript', raw: match[0], tokens: this.lexer.inlineTokens(match[1]) };
+      },
+      renderer(token) { return `<sup>${this.parser.parseInline(token.tokens)}</sup>`; },
+    },
+    {
+      name: 'subscript',
+      level: 'inline',
+      start(src) { return src.indexOf('~'); },
+      tokenizer(src) {
+        const match = /^~(?!~)([^~\n]+?)~(?!~)/.exec(src);
+        if (!match) return;
+        return { type: 'subscript', raw: match[0], tokens: this.lexer.inlineTokens(match[1]) };
+      },
+      renderer(token) { return `<sub>${this.parser.parseInline(token.tokens)}</sub>`; },
+    },
+    {
+      name: 'underline',
+      level: 'inline',
+      start(src) { return src.indexOf('++'); },
+      tokenizer(src) {
+        const match = /^\+\+([^\n]+?)\+\+/.exec(src);
+        if (!match) return;
+        return { type: 'underline', raw: match[0], tokens: this.lexer.inlineTokens(match[1]) };
+      },
+      renderer(token) { return `<u>${this.parser.parseInline(token.tokens)}</u>`; },
+    },
+    {
+      name: 'highlight',
+      level: 'inline',
+      start(src) { return src.indexOf('=='); },
+      tokenizer(src) {
+        const match = /^==([^\n]+?)==/.exec(src);
+        if (!match) return;
+        return { type: 'highlight', raw: match[0], tokens: this.lexer.inlineTokens(match[1]) };
+      },
+      renderer(token) { return `<mark>${this.parser.parseInline(token.tokens)}</mark>`; },
+    },
+  ],
+});
+
 export const SIZE_MAP = { sm: '30%', md: '50%', lg: '75%', xl: '90%', '2xl': '100%' };
 
 let counter = 0;
