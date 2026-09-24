@@ -1,10 +1,9 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Protocols — Denmark-GA iGEM 2025</title>
-    <base href="../" />
+    <base href="../">
     <script>
       (function () {
         var stored = localStorage.getItem('theme');
@@ -12,11 +11,11 @@
         if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
       })();
     </script>
-    <link rel="stylesheet" href="static/style.css" />
-    <link rel="preload" href="https://static.igem.wiki/teams/6112/wiki/betterfonts/fredoka-regular.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="preload" href="https://static.igem.wiki/teams/6112/wiki/betterfonts/varelaround-regular.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="static/denmark.css" />
-    <link rel="stylesheet" href="static/section-blocks.css" />
+    <link rel="stylesheet" href="static/style.css">
+    <link rel="preload" href="https://static.igem.wiki/teams/6112/wiki/betterfonts/fredoka-regular.ttf" as="font" type="font/ttf" crossorigin="">
+    <link rel="preload" href="https://static.igem.wiki/teams/6112/wiki/betterfonts/varelaround-regular.ttf" as="font" type="font/ttf" crossorigin="">
+    <link rel="stylesheet" href="static/denmark.css">
+    <link rel="stylesheet" href="static/section-blocks.css">
     <link rel="stylesheet" href="static/wiki-pages.css?v=d1ad75dc95bf">
   </head>
   <body class="wiki-interior" data-page-family="lab">
@@ -37,57 +36,404 @@
       <div class="toc-handle" aria-hidden="true">Table of Contents</div>
       <nav class="toc-nav" id="toc-links" aria-label="Page sections">
         <p class="toc-nav-heading">On this page</p>
-        <a href="pages/protocols.html#overview"     data-toc="overview">Overview</a>
-        <a href="pages/protocols.html#molecular"    data-toc="molecular">Molecular Biology</a>
-        <a href="pages/protocols.html#cell-culture" data-toc="cell-culture">Cell Culture &amp; Assays</a>
-        <a href="pages/protocols.html#safety"       data-toc="safety">Safety Considerations</a>
-        <a href="pages/protocols.html#references"   data-toc="references">References</a>
-      </nav>
+        
+        
+        
+        
+        
+      <a href="pages/protocols.html#overview" data-toc="overview">Overview</a><a href="#media-reagent-preparation" data-toc="media-reagent-preparation">Media &amp; Reagent Preparation</a><a href="#transformation" data-toc="transformation">Transformation</a><a href="#expression-and-harvesting" data-toc="expression-and-harvesting">Expression and Harvesting</a><a href="#lysis-and-fractionation" data-toc="lysis-and-fractionation">Lysis and Fractionation</a><a href="#purification" data-toc="purification">Purification</a><a href="#sds-page" data-toc="sds-page">SDS-PAGE</a><a href="#luciferase-assay" data-toc="luciferase-assay">Luciferase Assay</a><a href="#spr" data-toc="spr">SPR</a><a href="#coffee-ring-assay" data-toc="coffee-ring-assay">Coffee Ring Assay</a></nav>
     </aside>
 
       <div class="page-content">
         <div class="container">
 
-          <section class="wiki-section toc-section" id="overview">
+          
+
+          
+
+          
+
+          
+
+          
+
+        <section class="wiki-section toc-section" id="overview">
             <h3><span class="chapter-number" aria-hidden="true">01</span><span>Overview</span></h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
+            
+          <div class="section-block">
+<p>--</p>
 
-          <section class="wiki-section toc-section" id="molecular">
-            <h3><span class="chapter-number" aria-hidden="true">02</span><span>Molecular Biology Protocols</span></h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
+</div></section><section class="wiki-section toc-section" id="media-reagent-preparation">
+            <h3><span class="chapter-number" aria-hidden="true">02</span><span>Media &amp; Reagent Preparation</span></h3>
+            
+            
 
-          </section>
+          <div class="section-block">
+<h6><strong>Plates</strong></h6>
+<table>
+<thead>
+<tr>
+<th><strong>Plate Type</strong></th>
+<th><strong>Protocol</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>LB Agar</td>
+<td><a href="https://static.igem.org/mediawiki/2018/f/f2/T--Toronto--_LB_Media_Preperation_Protocol.pdf">Toronto iGEM 2018</a></td>
+</tr>
+<tr>
+<td>LB + Kan</td>
+<td><a href="https://static.igem.org/mediawiki/2019/8/84/T--UCSC--LB_Kan.pdf">UCSC iGEM 2019</a></td>
+</tr>
+<tr>
+<td>LB + Chlor</td>
+<td><a href="https://static.igem.org/mediawiki/2018/3/32/T--CMUQ--CMUQchl.pdf">CMUQ iGEM 2018</a></td>
+</tr>
+</tbody></table>
+<hr>
+<h6><strong>LB + Kan + Chlor Plates</strong></h6>
+<p>Yields around 20 plates (100 × 15 mm) with final concentrations of 50 µg/mL for kanamycin and 25 µg/mL for chloramphenicol.</p>
+<table>
+<thead>
+<tr>
+<th>Chemicals</th>
+<th>Apparatus</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tryptone, Yeast Extract, NaCl, Agar, dH2O</td>
+<td>500 mL flask, autoclave, 60°C water bath</td>
+</tr>
+<tr>
+<td>Kanamycin, Chloramphenicol</td>
+<td>0.22 µm filter, microcentrifuge tubes</td>
+</tr>
+<tr>
+<td>Sterile dH2O, 70% ethanol</td>
+<td>Around 20 petri plates, hood or flame</td>
+</tr>
+</tbody></table>
+<hr>
+<h6>Protocol</h6>
+<ul>
+<li><p>1 — Combine in a 500 mL flask: Tryptone 2.5 g, Yeast Extract 1.25 g, NaCl 2.5 g, Agar 3.75 g, dH2O 250 mL.</p>
+</li>
+<li><p>2 — Cover with foil. Autoclave at 121°C, 20 psi, 30 min. <em>(Green &amp; Sambrook, 2012)</em></p>
+</li>
+<li><p>3 — Place in a 60°C water bath for at least 10 min.</p>
+</li>
+<li><p>4 — Prepare Kan stock by dissolving 50 mg in 1 mL sterile dH2O. Then, filter-sterilize. <em>(Addgene)</em></p>
+</li>
+<li><p>5 — Prepare Chlor stock by dissolving 12.5 mg in 500 µL 70% ethanol. <em>(CMUQ iGEM 2018)</em></p>
+</li>
+<li><p>6 — Set up a pouring station in a hood or near a flame. Wipe the bench with 70% ethanol.</p>
+</li>
+<li><p>7 — Add 250 µL Kan stock and 250 µL Chlor stock into a flask. Then, swirl. <em>(Addgene)</em></p>
+</li>
+<li><p>8 — Pour about 12 mL for each plate. Let them solidify for 20 mins at room temperature.</p>
+</li>
+<li><p>9 — Label and store them inverted at 4°C. Use them within a month.</p>
+</li>
+</ul>
 
-          <section class="wiki-section toc-section" id="cell-culture">
-            <h3><span class="chapter-number" aria-hidden="true">03</span><span>Cell Culture &amp; Assay Protocols</span></h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
+</div><div class="section-block">
+<h6><strong>Sources</strong></h6>
+<ul>
+<li>CMUQ iGEM 2018. LB-Chl Plates Prep. <a href="https://static.igem.org/mediawiki/2018/3/32/T--CMUQ--CMUQchl.pdf">https://static.igem.org/mediawiki/2018/3/32/T--CMUQ--CMUQchl.pdf</a></li>
+</ul>
 
-          <section class="wiki-section toc-section" id="safety">
-            <h3><span class="chapter-number" aria-hidden="true">04</span><span>Safety Considerations</span></h3>
-            <div class="section-block">
-              <span class="section-block-label">--</span>
-            </div>
-          </section>
+</div></section><section class="wiki-section toc-section" id="transformation">
+            <h3><span class="chapter-number" aria-hidden="true">03</span><span>Transformation</span></h3>
+            
+          <div class="section-block">
+<h6>Transformation into BL21(DE3)</h6>
+<p>(<a href="https://www.neb.com/en-ca/protocols/transformation-protocol-for-bl21-de3-competent-cells-c2527?pdf=true">NEB C2527</a>)</p>
+<table>
+<thead>
+<tr>
+<th>Chemicals</th>
+<th>Apparatus</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BL21(DE3) competent cells, plasmid DNA</td>
+<td>Heat bath (42°C), ice container</td>
+</tr>
+<tr>
+<td>SOC medium, pUC19</td>
+<td>Shaking incubator, selection plates</td>
+</tr>
+</tbody></table>
+<hr>
+<h6>Protocol (Derived from NEB’s Transformation Protocol for BL21(DE3) Competent Cells (C2527))</h6>
+<p>SOC Media: <a href="https://www.novoprolabs.com/tools/buffer-preparations-and-recipes/soc-medium">NovoPro</a></p>
+<p>Glycerol Stocks: <a href="https://www.addgene.org/protocols/create-glycerol-stock/">Addgene</a></p>
+<ul>
+<li><p>Note: use respective antibiotic plate for each plasmid resistance</p>
+</li>
+<li><p><strong>Control (expected to grow)</strong>: 50 µL cells + 2 µL pUC19 on LB + Ampicillin</p>
+</li>
+<li><p>1 — Thaw a tube of BL21(DE3) Competent E. coli cells on ice for 10 minutes until the last ice crystals disappear. Mix gently and carefully pipette 50 µl of cells into a transformation tube on ice.</p>
+</li>
+<li><p>2 — Add 2 µl containing 1 pg–100 ng of plasmid DNA to the cell mixture. Carefully flick the tube 4–5 times to mix cells and DNA. Do not vortex.</p>
+</li>
+<li><p>3 — Place the mixture on ice for 30 minutes. Do not mix.</p>
+</li>
+<li><p>4 — Heat shock at exactly 42°C for exactly 30 seconds. Do not mix.</p>
+</li>
+<li><p>5 — Place on ice for 5 minutes. Do not mix.</p>
+</li>
+<li><p>6 — Pipette 950 µl of room temperature SOC into the mixture.</p>
+</li>
+<li><p>7 — Place at 37°C for 60 minutes. Shake vigorously at 125 rpm or rotate. </p>
+</li>
+<li><p>8 — Warm plates to 37°C.</p>
+</li>
+<li><p>9 — Spread 50 µl of each dilution onto a plate and incubate overnight at 37°C. If you don't see growth, spin down the transformation mixture.</p>
+</li>
+</ul>
 
-          <section class="wiki-section toc-section" id="references">
-            <h3><span class="chapter-number" aria-hidden="true">05</span><span>References</span></h3>
-            <ol class="references-list">
-              <li class="section-block">--</li>
-            </ol>
-          </section>
+</div></section><section class="wiki-section toc-section" id="expression-and-harvesting">
+            <h3><span class="chapter-number" aria-hidden="true">04</span><span>Expression and Harvesting</span></h3>
+            
+          <div class="section-block">
+<h6>Induction</h6>
+<table>
+<thead>
+<tr>
+<th>Chemicals</th>
+<th>Apparatus</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>LB media, Kanamycin (50 µg/mL), IPTG (1M)</td>
+<td>Shaking incubator, spectrophotometer, centrifuge</td>
+</tr>
+</tbody></table>
+<hr>
+<h6>Protocol</h6>
+<ul>
+<li><p>1 — Pick a verified colony and inoculate into 5 mL LB + 5 uL Kanamycin or Chloramphenicol (concentration of Kan is 50 µg/mL while it is 25 µg/mL for Chloramphenicol). Grow overnight at 37°C at 150 rpm.</p>
+</li>
+<li><p>2 — The next morning, inoculate 50 mL fresh LB + 50 µL Kanamycin or Chloramphenicol (depending on what plasmid you are dealing with) with 500 µL of overnight culture (1:100 dilution). Use an erlenmeyer flask that can store a volume of at least 4× the culture volume.</p>
+</li>
+<li><p>3 — Incubate at 37°C and at 250 rpm. Measure the OD600 every 30 minutes by removing the flask during incubation and placing it back after you measure until OD600 reaches around 0.5. Use a new cuvette for each measurement and discard the culture you use after each measurement. As the OD600 measurements approach the target value, reduce the interval between measurements because cell growth increases exponentially over time.</p>
+</li>
+<li><p>4 — At OD600 at around 0.5, add IPTG to reach a final concentration of 1 mM (10 µL of 1M stock per 10 mL culture). Mix well.</p>
+</li>
+<li><p>5 — Immediately shift the temperature to 22°C and continue incubating at 250 rpm for around 16 hours. </p>
+</li>
+<li><p>6 — Harvest the cells by centrifuging the tube at 5,000 × g for 15 minutes at 4°C</p>
+</li>
+<li><p>7 —  Discard the supernatant and store the pellet at -20°C</p>
+</li>
+</ul>
 
-        </div>
+</div><div class="section-block">
+<h6>Steps for Normalizing after Harvesting</h6>
+<ul>
+<li>1 — Add 3.0 mL of PBS to the frozen pellets and thoroughly resuspend until pellet is dissolved.</li>
+<li>2 — Take (see normalization table) µL and place in a single eppendorf, then add (see normalization table) µL of PBS to the eppendorf (final vol of 1 mL). Spin down and remove solution. Keep pellet. Take both pre- and post-induction pellets and add 20 µL of SDS-PAGE sample buffer, boil, spin down, and freeze or run gel.</li>
+<li>3 — Split the remaining sample into 4 aliquots. Spin down and remove solution.</li>
+<li>4 — Dilute one pellet at a 5:1 ratio of lysis buffer with protease inhibitors. Perform lysis as previously instructed including rounds of freeze/thaw. Volume should be around 600 µL.</li>
+<li>4.1 — Vortex the protease inhibitor bottle before use to ensure a homogeneous suspension.</li>
+<li>4.2 — Immediately before use, add the cocktail at 10 µL/mL directly to the cell lysis buffer or extract to produce a 1X final concentration.</li>
+<li>5 — Take half of the tagged Cage lysis and add it to the untagged Key sample. Mix and incubate for 5–10 min. Take both lysis samples and spin down for 30 min at max speed.</li>
+<li>6 — Separate the supernatant and the pellet. Determine volume of the supernatant, add same volume of PBS to the pellet to give both samples the same volume, and resuspend the pellet thoroughly. Take 10 µL of each sample and add 10 µL of SDS-PAGE buffer, boil, spin down, then freeze or run gel.</li>
+</ul>
+
+</div></section><section class="wiki-section toc-section" id="lysis-and-fractionation"><h3>Lysis and Fractionation</h3><div class="section-block">
+<h6>Lysis</h6>
+<table>
+<thead>
+<tr>
+<th>Chemicals</th>
+<th>Apparatus</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PBS (ice-cold), NEBExpress lysis reagent</td>
+<td>Centrifuge, ice container, microcentrifuge tubes</td>
+</tr>
+</tbody></table>
+<hr>
+<h6>Protocol</h6>
+<ul>
+<li><p>1 — Thaw the frozen pellet on ice. Add 3 mL PBS and resuspend thoroughly until dissolved.</p>
+</li>
+<li><p>2 — Wash with ice-cold PBS. Centrifuge at 500 × g for 5 min at 4°C. Aspirate supernatant.</p>
+</li>
+<li><p>3 — Repeat the wash step once more.</p>
+</li>
+<li><p>4 — Resuspend the pellet in NEBExpress lysis reagent (1 mL per 10⁷ cells).</p>
+</li>
+<li><p>5 — Incubate on ice for 20 to 30 min with gentle mixing.</p>
+</li>
+<li><p>6 — Clarify at 13,000 × g for 20 min at 4°C.</p>
+</li>
+<li><p>7 — Transfer the supernatant to a new cold tube, and reserve the pellet as an insoluble fraction.</p>
+</li>
+</ul>
+
+</div></section><section class="wiki-section toc-section" id="purification"><h3>Purification</h3><div class="section-block">
+<h6>Protein Purification</h6>
+<p>(<a href="https://www.neb.com/en-ca/protocols/nebexpress-ni-nta-magnetic-beads-typical-reaction-protocol?pdf=true">NEBExpress Ni-NTA Magnetic Beads</a>)</p>
+<table>
+<thead>
+<tr>
+<th>Chemicals</th>
+<th>Apparatus</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Binding buffer, wash buffer, elution buffer</td>
+<td>Magnetic rack, rotating rack, microcentrifuge tubes</td>
+</tr>
+</tbody></table>
+<hr>
+<h6>Protocol</h6>
+<ul>
+<li><p>1 — Resuspend the bead slurry by vortexing. Dispense 50 µL of it into a 1.5 mL tube.</p>
+</li>
+<li><p>2 — Add 200 µL of binding buffer. Mix briefly. Pellet on a magnetic rack and discard the supernatant.</p>
+</li>
+<li><p>3 — Add 1.0 mL of cleared lysate to the equilibrated beads. Incubate for 30 min at room temperature on a rotating rack.  (Note: Beads may adhere to the sides or cap of the tubes during mixing. Samples can be spun briefly in a microcentrifuge to pull the bead sample down prior to pelleting with a magnetic rack.)</p>
+</li>
+<li><p>4 — Allow a pellet to form using a magnetic rack. Remove the supernatant and reserve it as flowthrough.</p>
+</li>
+<li><p>5 — Add 500 µL of wash buffer. Resuspend the beads. Create a pellet with a magnetic rack and discard the supernatant. Repeat this whole step twice.</p>
+</li>
+<li><p>6 — Add 100 µL of the elution buffer. Mix 2 min on a rotating rack. Create a pellet with a magnetic rack. Keep the supernatant because this is the purified protein.</p>
+</li>
+<li><p>7 — Repeat elution if needed; the majority of protein is in the first elution.</p>
+</li>
+</ul>
+
+</div></section><section class="wiki-section toc-section" id="sds-page"><h3>SDS-PAGE</h3><div class="section-block">
+<h6>Normalizing Samples for SDS</h6>
+<h6>Step 1 (Use on the raw culture before harvesting to make sure each lane has the same number of cells)</h6>
+<ul>
+<li><p>Formula: Volume of Spin (mL) = Target OD / Sample OD600</p>
+</li>
+<li><p>1 — Measure the culture's OD600.</p>
+</li>
+<li><p>2 — Divide 1.5 by that OD600 reading.</p>
+</li>
+<li><p>3 — Spin down that exact volume in mL.</p>
+</li>
+<li><p>4 — Continue to cell lysis.</p>
+</li>
+</ul>
+<h6>Step 2 (Use on the purified protein elution to get the mass concentration of the isolated target protein)</h6>
+<ul>
+<li><p>Formula: NanoLuc will output this</p>
+</li>
+<li><p>1 — Blank the NanoDrop using the elution buffer.</p>
+</li>
+<li><p>2 — Drop 2 µL of purified protein.</p>
+</li>
+<li><p>3 — Get the concentration in mg/mL.</p>
+</li>
+</ul>
+<h6>Step 3 (Use on the purified protein stock before you load them to ensure that each lane on the final gel has the same mass of pure protein)</h6>
+<ul>
+<li><p>Formula: V1 = (C2 × V2) / C1</p>
+</li>
+<li><p>Here, C1 is the NanoDrop reading, C2 is the target gel’s concentration, and V2 is the final volume of the target.</p>
+</li>
+<li><p>1 — Insert your target C2 and V2 values.</p>
+</li>
+<li><p>2 — Calculate V1, which is the sample’s volume.</p>
+</li>
+<li><p>3 — Mix V1 with water up to 5 µL.</p>
+</li>
+<li><p>4 — Add 5 µL of 2X Laemmli buffer to reach 10 µL.</p>
+</li>
+</ul>
+
+</div><div class="section-block">
+<h6>Sample Preparation</h6>
+
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Reducing (µL)</th>
+<th>Non-Reducing (µL)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Sample</td>
+<td>5</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Laemmli Sample Buffer (5% β-ME for reducing but plain for non-reducing)</td>
+<td>5</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Total</td>
+<td>10</td>
+<td>10</td>
+</tr>
+</tbody></table>
+
+<hr>
+<ul>
+<li>Note: Normalize all samples to equal protein concentration using A280 before preparing. Prepare β-mercaptoethanol in a fume hood.</li>
+</ul>
+
+</div><div class="section-block">
+<h6>SDS-PAGE</h6>
+
+<table>
+<thead>
+<tr>
+<th>Chemicals</th>
+<th>Apparatus</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>10x running buffer, dH₂O</td>
+<td>Glectrophoresis cell, power supply</td>
+</tr>
+<tr>
+<td>Laemmli sample buffer, β-mercaptoethanol</td>
+<td>Gel cassettes, microcentrifuge tubes</td>
+</tr>
+<tr>
+<td>Bio-Safe Coomassie stain</td>
+<td>Staining container, heat block (95°C)</td>
+</tr>
+<tr>
+<td>Protein ladder (kaleidoscope), actin/myosin control</td>
+<td>Pipettes</td>
+</tr>
+</tbody></table>
+
+<hr>
+<h6>Running</h6>
+<p>• 1 – Prepare 1x running buffer: Mix 100 mL of 10x stock with 900 mL of dH₂O.<br>• 2 – Take the comb out and remove the tape. Set up the electrophoresis chamber.<br>• 3 – Pour 200 mL of 1x running buffer into the internal chamber. Pour enough 1x running buffer in the external chamber to fill up until the indicator line.<br>• 4 – Heat the samples for 5 minutes at 95°C, then spin them down.<br>• 5 – Add 5 µL of ladder to one well. Load 10 µL of actin/myosin control mixture to one well.<br>• 6 – Add 10 to 15 µL of sample into each well. Do not use wells 1 and 10 because of edge effects. Ensure the tip is between the plates and slowly add.<br>• 7 – Run at 150V for 45 minutes. Initial current reading is expected to be around 45 mA and the final reading should be around 25mA. Document what occurs (make sure you take a video).<br>• 8 – Turn off the power source. Then, take the gel out by floating off the plate into the water.</p>
+
+<hr>
+<h6>Staining</h6>
+<ul>
+<li>1 — Wash the gel three times, 5 min each, in 200 mL dH₂O.</li>
+<li>2 — Add 50 mL Bio-Safe Coomassie stain. Agitate for at least 1 hour.</li>
+<li>3 — Replace with the destaining solution. Soak overnight, and be sure to replace the solution at least once.</li>
+<li>4 — Rinse in 200 mL dH₂O for at least 30 min.</li>
+</ul>
+
+</div><div class="section-block">
+<h6>Sources</h6>
+<ul>
+<li>Bio-Rad. SDS-PAGE Technical Bulletin 6040. <a href="https://www.bio-rad.com/webroot/web/pdf/lsr/literature/Bulletin_6040.pdf">https://www.bio-rad.com/webroot/web/pdf/lsr/literature/Bulletin_6040.pdf</a></li>
+<li>Bio-Rad. Mini-PROTEAN TGX Gels Bulletin 6210. <a href="https://www.bio-rad.com/webroot/web/pdf/lsr/literature/Bulletin_6210.pdf">https://www.bio-rad.com/webroot/web/pdf/lsr/literature/Bulletin_6210.pdf</a></li>
+<li>Bio-Rad. SDS-PAGE Analysis. <a href="https://www.bio-rad.com/en-us/applications-technologies/sds-page-analysis?ID=LW7FGX4VY">https://www.bio-rad.com/en-us/applications-technologies/sds-page-analysis?ID=LW7FGX4VY</a></li>
+</ul>
+
+</div></section><section class="wiki-section toc-section" id="luciferase-assay"><h3>Luciferase Assay</h3><div class="section-block"></div></section><section class="wiki-section toc-section" id="spr"><h3>SPR</h3><div class="section-block"></div></section><section class="wiki-section toc-section" id="coffee-ring-assay"><h3>Coffee Ring Assay</h3><div class="section-block"></div></section></div>
       </div>
       </div>
     </main>
@@ -96,7 +442,7 @@
     <button id="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false" title="Toggle dark mode">
       <span id="theme-toggle-icon" aria-hidden="true"></span>
     </button>
-    <a id="back-to-top" href="#" aria-label="Back to top">&#8679;</a>
+    <a id="back-to-top" href="#" aria-label="Back to top">⇧</a>
     <script src="static/cursor.js"></script>
     <script>
       (function () {
@@ -128,5 +474,6 @@
     <script src="static/include.js"></script>
     <script src="static/wiki-toc.js?v=022a3252fdb1"></script>
       <script src="static/carousel.js"></script>
-  </body>
-</html>
+  
+
+</body></html>

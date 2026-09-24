@@ -804,8 +804,3 @@ a {
   background: var(--accent-soft) !important;
   color: var(--accent-hover) !important;
 }
-.wiki-md-editor .w-md-editor-text,
-.wiki-md-editor .w-md-editor-text-input,
-.wiki-md-editor .w-md-editor-text-pre {
-  font-size: 13.5px !important;
-}
