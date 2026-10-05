@@ -2,6 +2,18 @@ import { marked } from 'marked';
 
 marked.use({ gfm: true, breaks: true });
 
+// Hand-typed `<h4>Heading</h4>` followed directly by prose on the next line
+// opens a CommonMark HTML block that only ends at a blank line — so the prose
+// is passed through raw and `**bold**` etc. render as literal stars. Insert
+// the blank line after any line ending in a closing block-level tag.
+marked.use({
+  hooks: {
+    preprocess(md) {
+      return md.replace(/(<\/(?:h[1-6]|p|div|blockquote|figure|table|ul|ol|section)>)[ \t]*\n(?![ \t]*\n)/gi, '$1\n\n');
+    },
+  },
+});
+
 // Extra inline formatting beyond marked's defaults, matching the toolbar
 // buttons added in Editor.jsx. Each tokenizer requires a negative lookahead
 // on the closing side so `~sub~` never swallows part of GFM's `~~strike~~`
