@@ -36,6 +36,27 @@ function renderContent(content) {
   };
 }
 
+// Inline the page's own stylesheets, fetched through the GitLab API like the
+// page HTML itself. Linking them from the published site alone leaves the
+// preview completely unstyled whenever that host is unreachable from the
+// editor's network (seen in practice: connection resets on *.igem.wiki).
+// Relative url()s inside the CSS (fonts, illustrations) still point at the
+// published site; a stylesheet that fails to fetch keeps its <link>.
+async function inlineStylesheets(html, token) {
+  const linkRe = /<link\b[^>]*rel="stylesheet"[^>]*href="static\/([^"?]+)[^"]*"[^>]*>/g;
+  const links = [...html.matchAll(linkRe)];
+  const css = await Promise.all(links.map(([, file]) =>
+    fetchFile(token, `wiki/static/${file}`).catch(() => null)));
+  links.forEach(([tag, file], i) => {
+    if (css[i] == null) return;
+    const dir = `${STATIC_BASE}static/${file.replace(/[^/]*$/, '')}`;
+    const fixed = css[i].replace(/url\((['"]?)(?!data:|https?:|\/)([^'")]+)\1\)/g,
+      (_, q, path) => `url(${q}${new URL(path, dir)}${q})`);
+    html = html.replace(tag, () => `<style>${fixed}</style>`);
+  });
+  return html;
+}
+
 function rewriteAssetUrls(html) {
   return html
     .replace(/(src|href)="static\//g, `$1="${STATIC_BASE}static/`)
@@ -323,6 +344,7 @@ export default function Preview({ selectedPage, content, token }) {
     setFetchError(null);
 
     fetchFile(token, `wiki/pages/${selectedPage}.html`)
+      .then(html => inlineStylesheets(html, token))
       .then(setRawHtml)
       .catch(err => setFetchError(err.message))
       .finally(() => setLoading(false));
