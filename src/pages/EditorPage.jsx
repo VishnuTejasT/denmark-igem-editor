@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchPage, fetchPageHtml, fetchPageList, commitPage, fetchPageMeta, fetchCommitInfo } from '../lib/gitlab';
+import { glFetch, fetchPage, fetchPageHtml, fetchPageList, commitPage, fetchPageMeta, fetchCommitInfo } from '../lib/gitlab';
 import { parseSectionsFromHtml } from '../lib/htmlParser';
 import { migrateSection, sectionIsFilled, uniqueSectionId, dedupeEmptySubsections, dedupeSections } from '../lib/blocks';
 import Editor from '../components/Editor';
@@ -127,8 +127,7 @@ export default function EditorPage() {
   useEffect(() => {
     if (!token) { navigate('/'); return; }
 
-    const host = (import.meta.env.VITE_GITLAB_HOST || 'gitlab.igem.org').replace(/^https?:\/\//, '');
-    fetch(`https://${host}/api/v4/user`, { headers: { Authorization: `Bearer ${token}` } })
+    glFetch('/user', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => setUsername(d.username || d.name || ''))
       .catch(() => {});

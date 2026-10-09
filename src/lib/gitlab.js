@@ -1,7 +1,8 @@
 import { sectionCardsHtml, sectionBodyListItems } from './blocks';
 
-const GITLAB_HOST = (import.meta.env.VITE_GITLAB_HOST || 'gitlab.igem.org').replace(/^https?:\/\//, '');
-const BASE = `https://${GITLAB_HOST}/api/v4`;
+// All GitLab calls go through our own /api/gl proxy (see api/gl.js) so the
+// browser never makes a cross-origin request.
+export const glFetch = (path, opts) => fetch(`/api/gl?u=${encodeURIComponent(path)}`, opts);
 const PROJECT_ID = import.meta.env.VITE_GITLAB_PROJECT_ID || '4422';
 const BRANCH = import.meta.env.VITE_GITLAB_BRANCH || 'main';
 
@@ -34,8 +35,8 @@ const pageCache = new Map();
 // silently reverts the live page back to the stale template.
 async function fetchFileRaw(token, filePath) {
   const encoded = encodeURIComponent(filePath);
-  const url = `${BASE}/projects/${PROJECT_ID}/repository/files/${encoded}?ref=${encodeURIComponent(BRANCH)}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const url = `/projects/${PROJECT_ID}/repository/files/${encoded}?ref=${encodeURIComponent(BRANCH)}`;
+  const res = await glFetch(url, { headers: { Authorization: `Bearer ${token}` } });
 
   if (!res.ok) {
     if (res.status === 401 || res.status === 403) {
@@ -275,8 +276,8 @@ async function generatePageHtml(token, pageName, content) {
 // Lightweight fetch — bypasses cache, just returns lastCommitId + content.
 export async function fetchPageMeta(token, pageName) {
   const encoded = encodeURIComponent(jsonPath(pageName));
-  const url = `${BASE}/projects/${PROJECT_ID}/repository/files/${encoded}?ref=${encodeURIComponent(BRANCH)}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const url = `/projects/${PROJECT_ID}/repository/files/${encoded}?ref=${encodeURIComponent(BRANCH)}`;
+  const res = await glFetch(url, { headers: { Authorization: `Bearer ${token}` } });
   if (!res.ok) return null;
   const data = await res.json();
   return { lastCommitId: data.last_commit_id, content: JSON.parse(decodeBase64Utf8(data.content)) };
@@ -288,8 +289,8 @@ const SKIP_PAGES = new Set(['team.html', 'index.html']);
 // the same staleness risk applies here (a newly added page silently missing
 // from the editor's sidebar until the next deploy).
 export async function fetchPageList(token) {
-  const url = `${BASE}/projects/${PROJECT_ID}/repository/tree?path=wiki%2Fpages&ref=${encodeURIComponent(BRANCH)}&per_page=100`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const url = `/projects/${PROJECT_ID}/repository/tree?path=wiki%2Fpages&ref=${encodeURIComponent(BRANCH)}&per_page=100`;
+  const res = await glFetch(url, { headers: { Authorization: `Bearer ${token}` } });
   if (!res.ok) throw new Error(`GitLab error ${res.status} listing pages.`);
   const tree = await res.json();
   return tree
@@ -299,8 +300,8 @@ export async function fetchPageList(token) {
 }
 
 export async function fetchCommitInfo(token, commitId) {
-  const url = `${BASE}/projects/${PROJECT_ID}/repository/commits/${commitId}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  const url = `/projects/${PROJECT_ID}/repository/commits/${commitId}`;
+  const res = await glFetch(url, { headers: { Authorization: `Bearer ${token}` } });
   if (!res.ok) return null;
   return res.json();
 }
@@ -311,8 +312,8 @@ export async function commitPage(token, pageName, content, lastCommitId, authorN
   // committed in the meantime, refuse and tell the user to reload.
   if (lastCommitId) {
     const encoded = encodeURIComponent(jsonPath(pageName));
-    const checkUrl = `${BASE}/projects/${PROJECT_ID}/repository/files/${encoded}?ref=${encodeURIComponent(BRANCH)}`;
-    const checkRes = await fetch(checkUrl, { headers: { Authorization: `Bearer ${token}` } });
+    const checkUrl = `/projects/${PROJECT_ID}/repository/files/${encoded}?ref=${encodeURIComponent(BRANCH)}`;
+    const checkRes = await glFetch(checkUrl, { headers: { Authorization: `Bearer ${token}` } });
     if (checkRes.ok) {
       const checkData = await checkRes.json();
       if (checkData.last_commit_id !== lastCommitId) {
@@ -347,8 +348,8 @@ export async function commitPage(token, pageName, content, lastCommitId, authorN
     });
   }
 
-  const url = `${BASE}/projects/${PROJECT_ID}/repository/commits`;
-  const res = await fetch(url, {
+  const url = `/projects/${PROJECT_ID}/repository/commits`;
+  const res = await glFetch(url, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
