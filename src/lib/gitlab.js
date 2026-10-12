@@ -124,7 +124,12 @@ function createSectionElement(doc, s) {
 // Apply content to the page's current live HTML template and return the
 // updated HTML string.
 async function generatePageHtml(token, pageName, content) {
-  const html = await fetchPageHtml(token, pageName).catch(() => null);
+  // A page with no HTML file yet is fine (JSON-only commit); any other
+  // failure must surface instead of silently dropping the HTML update.
+  const html = await fetchPageHtml(token, pageName).catch(e => {
+    if (e.code === 'NOT_FOUND') return null;
+    throw e;
+  });
   if (!html) return null;
 
   const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -172,7 +177,9 @@ async function generatePageHtml(token, pageName, content) {
     // preview iframe's own copy of this lookup (byId(lookupId) || byId(s.id)
     // in Preview.jsx) already does this; the commit path must match it.
     const lookupId = s.sourceId || s.id;
-    let sec = doc.querySelector(`.toc-section#${lookupId}`) || doc.querySelector(`.toc-section#${s.id}`);
+    // CSS.escape: ids may start with a digit (e.g. "02model-description"),
+    // which is an invalid unescaped #selector and throws (same as Preview.jsx).
+    let sec = doc.querySelector(`.toc-section#${CSS.escape(lookupId)}`) || doc.querySelector(`.toc-section#${CSS.escape(s.id)}`);
     if (!sec) {
       sec = createSectionElement(doc, s);
       if (!sec) continue;
@@ -264,7 +271,7 @@ async function generatePageHtml(token, pageName, content) {
   const container = doc.querySelector('.page-content .container');
   const tocNav = doc.querySelector('.toc-nav');
   for (const s of content.sections || []) {
-    const sec = doc.querySelector(`.toc-section#${s.id}`);
+    const sec = doc.querySelector(`.toc-section#${CSS.escape(s.id)}`);
     if (sec && container) container.appendChild(sec);
     const tocLink = doc.querySelector(`.toc-nav a[data-toc="${s.id}"]`);
     if (tocLink && tocNav) tocNav.appendChild(tocLink);
@@ -328,7 +335,9 @@ export async function commitPage(token, pageName, content, lastCommitId, authorN
   // Invalidate cache so next load reads fresh JSON.
   pageCache.delete(pageName);
 
-  const htmlContent = await generatePageHtml(token, pageName, content).catch(() => null);
+  // Don't swallow errors here: a failed HTML render used to commit the JSON
+  // alone, so the live page silently never changed.
+  const htmlContent = await generatePageHtml(token, pageName, content);
 
   const actions = [
     {
