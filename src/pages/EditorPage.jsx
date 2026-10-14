@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { glFetch, fetchPage, fetchPageHtml, fetchPageList, commitPage, fetchPageMeta, fetchCommitInfo } from '../lib/gitlab';
 import { parseSectionsFromHtml } from '../lib/htmlParser';
 import { migrateSection, sectionIsFilled, uniqueSectionId, dedupeEmptySubsections, dedupeSections } from '../lib/blocks';
+import { mergeContent } from '../lib/merge';
 import Editor from '../components/Editor';
 import Preview from '../components/Preview';
 
@@ -122,6 +123,9 @@ export default function EditorPage() {
   const [, forceUpdate] = useState(0);
   const pollingRef = useRef(null);
   const lastCommitIdRef = useRef(null);
+  // What the remote looked like when we last synced: the 3-way merge base.
+  const baseRef = useRef(null);
+  const contentRef = useRef(null);
 
   // Auth check + username + manifest
   useEffect(() => {
@@ -166,6 +170,28 @@ export default function EditorPage() {
     });
   };
 
+  contentRef.current = content;
+
+  const saveBase = (page, id, c) => {
+    baseRef.current = { id, content: c };
+    sessionStorage.setItem(`wiki_base_${page}`, JSON.stringify(baseRef.current));
+  };
+
+  // Merge the latest remote commit into the editor without losing local edits.
+  const syncWithRemote = async (page, meta) => {
+    const sections = await fetchHtmlSections(token, page);
+    const theirs = normalizeContent(meta.content, sections);
+    const base = baseRef.current?.content || theirs;
+    const { merged, conflicts } = mergeContent(base, theirs, contentRef.current);
+    setContent(merged);
+    contentRef.current = merged;
+    sessionStorage.setItem(`wiki_draft_${page}`, JSON.stringify(merged));
+    setLastCommitId(meta.lastCommitId);
+    lastCommitIdRef.current = meta.lastCommitId;
+    saveBase(page, meta.lastCommitId, theirs);
+    return conflicts;
+  };
+
   // Update current page status live as user edits
   useEffect(() => {
     if (selectedPage) {
@@ -173,7 +199,7 @@ export default function EditorPage() {
     }
   }, [content, selectedPage]);
 
-  // Poll every 30s for concurrent edits
+  // Poll every 10s and merge others' commits straight into the editor
   useEffect(() => {
     if (pollingRef.current) clearInterval(pollingRef.current);
     setStaleWarning(null);
@@ -189,14 +215,16 @@ export default function EditorPage() {
           const mins = commit
             ? Math.max(1, Math.round((Date.now() - new Date(commit.committed_date)) / 60000))
             : null;
+          const conflicts = await syncWithRemote(selectedPage, meta);
           setStaleWarning({
             author: commit?.author_name || 'Someone',
             mins,
             message: commit?.message?.split('\n')[0] || '',
+            conflicts,
           });
         }
       } catch {}
-    }, 30000);
+    }, 10000);
 
     return () => clearInterval(pollingRef.current);
   }, [selectedPage, token]);
@@ -207,6 +235,7 @@ export default function EditorPage() {
     setContent(EMPTY);
     setLastCommitId(null);
     lastCommitIdRef.current = null;
+    baseRef.current = null;
     setStatus(null);
     setCommitMessage('');
     setStaleWarning(null);
@@ -245,7 +274,9 @@ export default function EditorPage() {
           }
           if (!parsed) {
             sessionStorage.removeItem(`wiki_draft_${pageName}`);
-            setContent(normalizeContent(fetched, sections));
+            const normalized = normalizeContent(fetched, sections);
+            setContent(normalized);
+            saveBase(pageName, cid, normalized);
             setLastCommitId(cid);
             lastCommitIdRef.current = cid;
             return;
@@ -264,10 +295,21 @@ export default function EditorPage() {
               blocks: dedupeEmptySubsections(migrateSection(s)),
             })),
           };
-          setContent(cleaned);
-          sessionStorage.setItem(`wiki_draft_${pageName}`, JSON.stringify(cleaned));
+          // The draft was started against an older commit: merge, don't overwrite.
+          let storedBase = null;
+          try { storedBase = JSON.parse(sessionStorage.getItem(`wiki_base_${pageName}`)); } catch {}
+          const theirs = normalizeContent(fetched, sections);
+          let result = cleaned;
+          if (storedBase?.content && storedBase.id !== cid) {
+            result = mergeContent(storedBase.content, theirs, cleaned).merged;
+          }
+          setContent(result);
+          sessionStorage.setItem(`wiki_draft_${pageName}`, JSON.stringify(result));
+          saveBase(pageName, cid, storedBase?.id === cid || !storedBase ? (storedBase?.content || theirs) : theirs);
         } else {
-          setContent(normalizeContent(fetched, sections));
+          const normalized = normalizeContent(fetched, sections);
+          setContent(normalized);
+          saveBase(pageName, cid, normalized);
         }
         setLastCommitId(cid);
         lastCommitIdRef.current = cid;
@@ -292,8 +334,20 @@ export default function EditorPage() {
     setStatus(null);
     try {
       const message = commitMessage.trim() || `Update ${selectedPage} content`;
-      await commitPage(token, selectedPage, content, lastCommitId, username, message);
+      // If someone committed since we last synced, merge theirs in first.
+      const meta = await fetchPageMeta(token, selectedPage);
+      let toCommit = contentRef.current;
+      let cid = lastCommitIdRef.current;
+      if (meta && cid && meta.lastCommitId !== cid) {
+        await syncWithRemote(selectedPage, meta);
+        toCommit = contentRef.current;
+        cid = meta.lastCommitId;
+      }
+      const res = await commitPage(token, selectedPage, toCommit, cid, username, message);
       sessionStorage.removeItem(`wiki_draft_${selectedPage}`);
+      saveBase(selectedPage, res.id, toCommit);
+      setLastCommitId(res.id);
+      lastCommitIdRef.current = res.id;
       // Sections just committed now really exist in the wiki HTML with a frozen
       // id — stop treating them as "new" so further heading edits don't reslug them.
       setContent(prev => ({
@@ -430,7 +484,8 @@ export default function EditorPage() {
                 <strong>{staleWarning.author}</strong> committed to this page
                 {staleWarning.mins ? ` ${staleWarning.mins} min ago` : ''}.
                 {staleWarning.message ? ` "${staleWarning.message}"` : ''}
-                {' '}Reload to get the latest before editing.
+                {' '}Their changes were merged into your editor
+                {staleWarning.conflicts ? ` (${staleWarning.conflicts} block(s) you also edited kept your version)` : ''}.
               </span>
               <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
                 <button
