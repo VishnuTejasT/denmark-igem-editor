@@ -185,10 +185,12 @@ export function blockToHtml(block) {
       return collapsibleBlockHtml(block);
     case 'subsection': {
       const heading = block.heading ? esc(block.heading) : '';
-      const inner = (block.blocks || []).map(blockToHtml).filter(Boolean).join('\n');
+      // The label is the h4, so headings typed inside the subsection drop to h5.
+      const inner = (block.blocks || []).map(blockToHtml).filter(Boolean).join('\n')
+        .replace(/<(\/?)h4\b/gi, '<$1h5');
       // Spacing between stacked cards comes from `.section-block +
       // .section-block` in the stylesheet, so no inline margin is needed.
-      return `<div class="section-block">\n  <span class="section-block-label">${heading}</span>\n${inner}\n</div>`;
+      return `<div class="section-block">\n  <h4 class="section-block-label">${heading}</h4>\n${inner}\n</div>`;
     }
     default:
       return '';
